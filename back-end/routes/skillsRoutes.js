@@ -1,27 +1,60 @@
 import express from 'express';
 import db from '../database/connection.js';
 import axios from 'axios';
-import fs from 'fs';
 import { gotScraping } from 'got-scraping';
 import { ensureAdmin } from '../middleware/auth.js';
 import { s3Service } from '../index.js';
 
 const SkillsRoutes = express.Router();
 
-SkillsRoutes.get('/:className', async (req, res)=>{
-    const className = req.params.className;
+SkillsRoutes.get('/:className/:spec?', async (req, res)=>{
+    const className = req.params.className.toLowerCase();
+    const spec = req.params.spec ? req.params.spec.toLocaleLowerCase() : null;
+    
     await db.transaction(async trx => {
-        const skillsQuery = await trx('skills').where({ class: className }).orderBy('skill_id', 'asc');
-        const skillsHitsQuery = await trx('skills_hits').whereIn('skill_id', skillsQuery.map(skill => skill.skill_id)).orderBy(['skill_id', 'hit_number']);
+
+        let specFilters = null;
+
+        if(spec === 'awakening'){
+            specFilters = ['Absolute', 'Secondary Skills', 'Magnus', 'Awakening']
+        }else if(spec === 'succession'){
+            specFilters = ['Absolute', 'Secondary Skills', 'Magnus', 'Prime']
+        }
+        
+        let query = trx('skills').where({ class_name: className});
+        if (specFilters){
+            query = query.whereIn('skill_spec', specFilters);
+        }
+
+        const skillsQuery = await query.orderBy('skill_id', 'asc');
+        const skillsHitsQuery = await trx('skills_hits').whereIn('skill_id', skillsQuery.map(skill => skill.skill_id)).orderBy(['skill_id', 'hit_count']);   
+
+        let response = {};
+
+        for(let skill of skillsQuery){
+            const id = skill.skill_id;
+            response[id] = {
+                skill: skill,
+                hits: []
+            };
+        }
+        for(let hit of skillsHitsQuery){
+            const id = hit.skill_id;
+
+            if(response[id]){
+                response[id].hits.push(hit) 
+            }
+            
+        }
+ 
         res.status(200).json({
             success: true,
-            skills: skillsQuery,
-            skills_hits: skillsHitsQuery
+            skills: response
         })
     }).catch(error => {
         res.status(500).json({
             success: false,
-            error: error
+            error: error.message || "Error to find skills"
         })  
     });
 });   
@@ -46,7 +79,7 @@ SkillsRoutes.put('/', ensureAdmin, async (req, res)=>{
     const icon_path = await download_icon(req.body.class, req.body.skill_id);
     
     await db.transaction(async trx => {
-        return await saveSkillDaata(trx, req.body, icon_path);
+        return await saveSkillData(trx, req.body, icon_path);
     }).then(([skillsHitsQuery, skillsQuery]) =>{
         res.status(200).json({
             success: true,
@@ -70,7 +103,7 @@ SkillsRoutes.post('/', ensureAdmin, async (req, res)=>{
         if(skill_already_exists){
             throw new Error('Skill with this ID already exists.');
         }
-        return await saveSkillDaata(trx, req.body, icon_path);
+        return await saveSkillData(trx, req.body, icon_path);
     }).then(([skillsHitsQuery, skillsQuery]) =>{
         res.status(200).json({
             success: true,
@@ -86,7 +119,7 @@ SkillsRoutes.post('/', ensureAdmin, async (req, res)=>{
     });
 });
 
-const saveSkillDaata = async (trx, skillData, icon_path) => {
+const saveSkillData = async (trx, skillData, icon_path) => {
     const {hits, skill_id, name, class: className, skill_spec, cooldown} = skillData;
 
     await deleteSkillData(trx, skill_id);
