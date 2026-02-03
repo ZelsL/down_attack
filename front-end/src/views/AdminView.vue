@@ -21,15 +21,8 @@
                     <p>Manage your skills here.</p>
                     <button @click="newSkill()" class="button is-primary">+</button>
                     <div>
-                        <SkillFormModal
-                        v-model="newSkillData"
-                        label="New Skill"
-                        :showModalNotification="showModalModification"
-                        :modalErrorMsg="modalErrorMsg"
-                        :modalSaveMsg="modalSaveMsg"
-                        :modalSaveError="modalSaveError"
-                        @close-notification="showModalModification = !showModalModification"
-                        @close-modal="newSkillModalVisible = !newSkillModalVisible"
+                        <SkillsManager
+                        :selectedClass="'hashashin'"
                         />
                     </div>
                 </div>
@@ -132,15 +125,28 @@
 import { ref } from 'vue';
 import apiClient from '@/services/api';
 import PresetFormModal from '@/components/PresetFormModal.vue';
-import SkillFormModal from '@/components/SkillFormModal.vue';
-
+import SkillsManager from '@/components/SkillsManager.vue';
 export default {
     name: 'adminView',
     components: {
         PresetFormModal,
-        SkillFormModal
+        SkillsManager
     },
     setup() {
+        let classes = ref([
+        'Warrior Succession', 'Warrior Awakening', 'Sorceress Succession', 'Sorceress Awakening',
+        'Ranger Succession', 'Ranger Awakening', 'Berserker Succession', 'Berserker Awakening',
+        'Tamer Succession', 'Tamer Awakening', 'Musa Succession', 'Musa Awakening',
+        'Maehwa Succession', 'Maehwa Awakening', 'Valkyrie Succession', 'Valkyrie Awakening',
+        'Wizard Succession', 'Wizard Awakening', 'Witch Succession', 'Witch Awakening',
+        'Ninja Succession', 'Ninja Awakening', 'Kunoichi Succession','Kunoichi Awakening',
+        'Dark Knight Succession', 'Dark Knight Awakening', 'Striker Succession', 'Striker Awakening',
+        'Mystic Succession', 'Mystic Awakening', 'Lahn Succession', 'Lahn Awakening', 'Archer Awakening',
+        'Corsair Succession', 'Corsair Awakening', 'Drakania Succession', 'Drakania Awakening',
+        'Woosa Succession', 'Woosa Awakening', 'Maegu Succession', 'Maegu Awakening', 'Scholar Awakening',
+        'Hashashin Succession', 'Hashashin Awakening', 'Deadeye Awakening', 'Wukong Awakening', 'Shai Succession'
+        ]);        
+
         const showDashboard = ref(true);
         const showCalculatorPresets = ref(false);
         const showSkillsManagement = ref(false);
@@ -412,7 +418,8 @@ export default {
             chooseMenuItem,
             newSkill,
             newSkillData,
-            newSkillModalVisible
+            newSkillModalVisible,
+            classes
         }
     }
 }
