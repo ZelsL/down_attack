@@ -4,7 +4,7 @@
       <div class="level-left">
         <h2 class="title is-5">
           Skills: <span class="has-text-primary">{{ selectedClass }}</span>
-          <span v-if="skillsList.length" class="tag is-light ml-2">{{ skillsList.length }} encontradas</span>
+          <span v-if="skillsList.length" class="tag is-dark ml-2">{{ skillsList.length }} encontradas</span>
         </h2>
       </div>
       <div class="level-right">
@@ -49,11 +49,9 @@
             <td>{{ item.skill.pvp_damage }}%</td>
             <td class="has-text-centered">
               <div class="buttons are-small is-centered">
-                <button class="button is-info is-light" @click="$emit('edit', item)">
-                  <i class="fas fa-edit"></i>
+                <button class="button is-white" @click="$emit('edit', item)">Edit
                 </button>
-                <button class="button is-danger is-light" @click="deleteSkill(item.skill.skill_id)">
-                  <i class="fas fa-trash"></i>
+                <button class="delete" @click="deleteSkill(item.skill.skill_id)">
                 </button>
               </div>
             </td>
@@ -136,7 +134,6 @@ export default {
         if(!confirm(`Deseja excluir a skill ID ${id}?`)) return;
         try {
             await apiClient.delete(`/skills/${id}`);
-            // Remove da lista localmente
             skillsList.value = skillsList.value.filter(item => item.skill.skill_id !== id);
         } catch (error) {
             console.error("Erro ao deletar", error);
