@@ -1,4 +1,4 @@
-import express from 'express';
+import express from "express";
 //import CalculaStackSoberana from '../CalculaStackSoberana.js';
 //import EnhancementCalculator from '../EnhancementCalculator.js';
 //import { getEnhanceableItems, getEnhanceableItemById } from '../services/enhanceableItemService.js';
@@ -6,14 +6,17 @@ import express from 'express';
 
 const router = express.Router();
 
-router.get('/', (req, res) => {
-    if (req.session.views) {
-        req.session.views++;
-        res.json({ message: "API funcionando!", views: req.session.views});
-    } else {
-        req.session.views = 1;
-        res.json({ message: "API funcionando!", BemVindo: "Essa é sua primeira visita!" });
-    }
+router.get("/", (req, res) => {
+  if (req.session.views) {
+    req.session.views++;
+    res.json({ message: "API funcionando!", views: req.session.views });
+  } else {
+    req.session.views = 1;
+    res.json({
+      message: "API funcionando!",
+      BemVindo: "Essa é sua primeira visita!",
+    });
+  }
 });
 
 /*router.get('/fs-optimizer', async (req, res)=>{
@@ -115,6 +118,5 @@ router.get('/simulator-state', async (req, res) => {
         res.status(500).json({ success: false, error: 'Ocorreu um erro interno ao acessar o estado do simulador.' });
     }
 });*/
-
 
 export default router;

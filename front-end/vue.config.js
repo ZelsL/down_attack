@@ -1,26 +1,26 @@
-const { defineConfig } = require('@vue/cli-service')
+const { defineConfig } = require("@vue/cli-service");
 
 module.exports = defineConfig({
   transpileDependencies: true,
   productionSourceMap: false,
-  chainWebpack: config => {
-    config.plugin('define').tap(definitions => {
+  chainWebpack: (config) => {
+    config.plugin("define").tap((definitions) => {
       Object.assign(definitions[0], {
-        __VUE_OPTIONS_API__: 'true',
-        __VUE_PROD_DEVTOOLS__: 'false',
-        __VUE_PROD_HYDRATION_MISMATCH_DETAILS__: 'false'
-      })
-      return definitions
-    })
+        __VUE_OPTIONS_API__: "true",
+        __VUE_PROD_DEVTOOLS__: "false",
+        __VUE_PROD_HYDRATION_MISMATCH_DETAILS__: "false",
+      });
+      return definitions;
+    });
   },
   // Sua configuração de proxy continua aqui
   devServer: {
     proxy: {
-      '/api': {
-        target: 'http://localhost:8585',
+      "/api": {
+        target: "http://localhost:8585",
         changeOrigin: true,
-        pathRewrite: { '^/api': '' },
+        pathRewrite: { "^/api": "" },
       },
     },
   },
-})
+});

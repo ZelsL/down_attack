@@ -1,19 +1,18 @@
 // src/stores/authStore.js
-import { defineStore } from 'pinia';
-import apiClient from '../services/api';
-import { ref, computed } from 'vue';
+import { defineStore } from "pinia";
+import apiClient from "../services/api";
+import { ref, computed } from "vue";
 
-export const useAuthStore = defineStore('auth', () => {
-
+export const useAuthStore = defineStore("auth", () => {
   const user = ref(null);
 
   const isLoggedIn = computed(() => !!user.value);
   const avatarUrl = computed(() => user.value?.avatarUrl);
-  const isAdmin = computed(() => user.value?.role === 'admin');
+  const isAdmin = computed(() => user.value?.role === "admin");
 
   async function checkAuthStatus() {
     try {
-      const response = await apiClient.get('/auth/me');
+      const response = await apiClient.get("/auth/me");
       user.value = response.data;
     } catch (error) {
       user.value = null;
@@ -22,11 +21,11 @@ export const useAuthStore = defineStore('auth', () => {
   }
 
   async function logout() {
-    try{
-      await apiClient.post('/auth/logout');
-    } catch(error){
+    try {
+      await apiClient.post("/auth/logout");
+    } catch (error) {
       console.error("Error during logout:", error);
-    }finally{
+    } finally {
       user.value = null;
     }
   }
