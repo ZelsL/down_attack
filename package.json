@@ -10,9 +10,12 @@
     "postinstall": "nuxt prepare",
     "lint:prettier:check": "prettier --check .",
     "lint:prettier:fix": "prettier --write .",
-    "commit": "cz"
+    "commit": "cz",
+    "test": "jest",
+    "test:watch": "test --watch"
   },
   "dependencies": {
+    "jest": "^30.5.1",
     "nuxt": "^4.5.2",
     "vue": "^3.5.42",
     "vue-router": "^5.3.0"
