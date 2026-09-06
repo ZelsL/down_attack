@@ -1,14 +1,25 @@
 <template>
   <div class="damage-calculator-page">
     <div class="calculator-layout">
-      
       <!-- Header -->
       <div class="page-header">
         <h4 class="title">Black Desert Damage Calculator</h4>
         <div class="header-buttons">
-          <button class="button is-info is-dark" :class="{ 'is-active': mode === 'pvp' }" @click="mode = 'pvp'">One vs One</button>
-          <button class="button is-warning" :class="{ 'is-active': mode === 'solare' }" @click="mode = 'solare' ">Solare</button>
-        </div> 
+          <button
+            class="button is-info is-dark"
+            :class="{ 'is-active': mode === 'pvp' }"
+            @click="mode = 'pvp'"
+          >
+            One vs One
+          </button>
+          <button
+            class="button is-warning"
+            :class="{ 'is-active': mode === 'solare' }"
+            @click="mode = 'solare'"
+          >
+            Solare
+          </button>
+        </div>
       </div>
 
       <!-- NOVA SEÇÃO: TOP RESULTS (Estilo Showdown) -->
@@ -16,14 +27,21 @@
         <!-- Resultado P1 -> P2 -->
         <div class="result-card p1-attacker">
           <div class="result-header">
-            <span class="attacker-name">Player 1</span> attacking <span class="defender-name">Player 2</span>
+            <span class="attacker-name">Player 1</span> attacking
+            <span class="defender-name">Player 2</span>
           </div>
           <div class="result-body">
             <div class="damage-text">
-              {{ damage1to2.hp_loss }} <span class="percent">({{ damage1to2.hp_loss_percentage }}%)</span>
+              {{ damage1to2.hp_loss }}
+              <span class="percent"
+                >({{ damage1to2.hp_loss_percentage }}%)</span
+              >
             </div>
             <div class="hit-chance">
-              Hit Chance: <span :class="getHitColor(hitChance1to2)">{{ hitChance1to2 }}%</span>
+              Hit Chance:
+              <span :class="getHitColor(hitChance1to2)"
+                >{{ hitChance1to2 }}%</span
+              >
             </div>
           </div>
           <div class="result-desc">
@@ -34,14 +52,21 @@
         <!-- Resultado P2 -> P1 -->
         <div class="result-card p2-attacker">
           <div class="result-header">
-            <span class="attacker-name">Player 2</span> attacking <span class="defender-name">Player 1</span>
+            <span class="attacker-name">Player 2</span> attacking
+            <span class="defender-name">Player 1</span>
           </div>
           <div class="result-body">
             <div class="damage-text">
-              {{ damage2to1.hp_loss }} <span class="percent">({{ damage2to1.hp_loss_percentage }}%)</span>
+              {{ damage2to1.hp_loss }}
+              <span class="percent"
+                >({{ damage2to1.hp_loss_percentage }}%)</span
+              >
             </div>
             <div class="hit-chance">
-              Hit Chance: <span :class="getHitColor(hitChance2to1)">{{ hitChance2to1 }}%</span>
+              Hit Chance:
+              <span :class="getHitColor(hitChance2to1)"
+                >{{ hitChance2to1 }}%</span
+              >
             </div>
           </div>
           <div class="result-desc">
@@ -52,143 +77,318 @@
 
       <!-- MAIN GRID (3 Colunas: P1 | Options | P2) -->
       <div class="main-grid">
-        
         <!-- Player 1 Panel -->
-        <PlayerPanel 
-          v-model="player1" 
-          label="Player 1" 
+        <PlayerPanel
+          v-model="player1"
+          label="Player 1"
           :playerNumber="1"
           :availableClasses="classes"
           :damage_type="getClassData(player2.class).damage_type"
-          @attackerState="(p1state) => player1.state = p1state"
+          @attackerState="(p1state) => (player1.state = p1state)"
         />
 
         <!-- NEW MIDDLE COLUMN: BUFFS -->
         <div class="options-panel">
           <div class="panel-header">Buffs</div>
-          
+
           <div class="scrollable-content">
-            
             <!-- Main Container (2-Column Grid) -->
             <div class="showdown-grid">
-              
               <!-- LEFT COLUMN (PLAYER 1) -->
               <div class="showdown-column">
                 <div class="column-title p1-title">Player 1</div>
-                <div class="column-title p1-sub-title"> Pre Addons</div>
-                
+                <div class="column-title p1-sub-title">Pre Addons</div>
+
                 <!-- Group: Skill Addons -->
                 <div class="button-group">
-                <!-- Buttons P1 -->
-                  <button class="showdown-btn" :class="{ active: p1Buffs.dr }" @click="toggleBuff('p1', 'dr')">+20 DP</button>
-                  <button class="showdown-btn" :class="{ active: p1Buffs.evasion }" @click="toggleBuff('p1', 'evasion')">+20 Evasion</button>
-                  <button class="showdown-btn" :class="{ active: p1Buffs.accuracy }" @click="toggleBuff('p1', 'accuracy')">+20 Accuracy</button>
-                  <button class="showdown-btn" :class="{ active: p1Buffs.critical_hit_rate }" @click="toggleBuff('p1', 'critical_hit_rate')">+30% Crit Rate</button>
-                  <button class="showdown-btn" :class="{ active: p1Buffs.critical }" @click="toggleBuff('p1', 'critical')">+5% Crit Dmg</button>
-                  <button class="showdown-btn" :class="{ active: p1Buffs.air_attack }" v-show="player1.state === 'air_attack'" @click="toggleBuff('p1', 'air_attack')">+5% Air Attack</button>
-                  <button class="showdown-btn" :class="{ active: p1Buffs.back_attack }" v-show="player1.state === 'back_attack'" @click="toggleBuff('p1', 'back_attack')">+5% Back Attack</button>
-                  <button class="showdown-btn" :class="{ active: p1Buffs.down_attack }" v-show="player1.state === 'down_attack'" @click="toggleBuff('p1', 'down_attack')">+5% Down Attack</button>
+                  <!-- Buttons P1 -->
+                  <button
+                    class="showdown-btn"
+                    :class="{ active: p1Buffs.dr }"
+                    @click="toggleBuff('p1', 'dr')"
+                  >
+                    +20 DP
+                  </button>
+                  <button
+                    class="showdown-btn"
+                    :class="{ active: p1Buffs.evasion }"
+                    @click="toggleBuff('p1', 'evasion')"
+                  >
+                    +20 Evasion
+                  </button>
+                  <button
+                    class="showdown-btn"
+                    :class="{ active: p1Buffs.accuracy }"
+                    @click="toggleBuff('p1', 'accuracy')"
+                  >
+                    +20 Accuracy
+                  </button>
+                  <button
+                    class="showdown-btn"
+                    :class="{ active: p1Buffs.critical_hit_rate }"
+                    @click="toggleBuff('p1', 'critical_hit_rate')"
+                  >
+                    +30% Crit Rate
+                  </button>
+                  <button
+                    class="showdown-btn"
+                    :class="{ active: p1Buffs.critical }"
+                    @click="toggleBuff('p1', 'critical')"
+                  >
+                    +5% Crit Dmg
+                  </button>
+                  <button
+                    class="showdown-btn"
+                    :class="{ active: p1Buffs.air_attack }"
+                    v-show="player1.state === 'air_attack'"
+                    @click="toggleBuff('p1', 'air_attack')"
+                  >
+                    +5% Air Attack
+                  </button>
+                  <button
+                    class="showdown-btn"
+                    :class="{ active: p1Buffs.back_attack }"
+                    v-show="player1.state === 'back_attack'"
+                    @click="toggleBuff('p1', 'back_attack')"
+                  >
+                    +5% Back Attack
+                  </button>
+                  <button
+                    class="showdown-btn"
+                    :class="{ active: p1Buffs.down_attack }"
+                    v-show="player1.state === 'down_attack'"
+                    @click="toggleBuff('p1', 'down_attack')"
+                  >
+                    +5% Down Attack
+                  </button>
                 </div>
 
                 <!-- Group: Debuffs (Applied TO ENEMY) -->
-                <div class="column-title p1-sub-title">Pre Debuffs Addons on Enemy</div>
+                <div class="column-title p1-sub-title">
+                  Pre Debuffs Addons on Enemy
+                </div>
                 <div class="button-group">
-                  <button class="showdown-btn debuff" :class="{ active: p1Debuff.minusDp }" @click="toggleDebuff('p1', 'minusDp')">-20 DP</button>
-                  <button class="showdown-btn debuff" :class="{ active: p1Debuff.minusEvasion }" @click="toggleDebuff('p1', 'minusEvasion')">-20 Evasion</button>
-                  <button class="showdown-btn debuff" :class="{ active: p1Debuff.minusAccuracy }" @click="toggleDebuff('p1', 'minusAccuracy')">-20 Accuracy</button>
+                  <button
+                    class="showdown-btn debuff"
+                    :class="{ active: p1Debuff.minusDp }"
+                    @click="toggleDebuff('p1', 'minusDp')"
+                  >
+                    -20 DP
+                  </button>
+                  <button
+                    class="showdown-btn debuff"
+                    :class="{ active: p1Debuff.minusEvasion }"
+                    @click="toggleDebuff('p1', 'minusEvasion')"
+                  >
+                    -20 Evasion
+                  </button>
+                  <button
+                    class="showdown-btn debuff"
+                    :class="{ active: p1Debuff.minusAccuracy }"
+                    @click="toggleDebuff('p1', 'minusAccuracy')"
+                  >
+                    -20 Accuracy
+                  </button>
                 </div>
               </div>
 
               <!-- RIGHT COLUMN (PLAYER 2) -->
               <div class="showdown-column">
                 <div class="column-title p2-title">Player 2</div>
-                <div class="column-title p2-sub-title"> Pre Addons</div>
-                
+                <div class="column-title p2-sub-title">Pre Addons</div>
+
                 <!-- Group: Skill Addons -->
                 <div class="button-group">
                   <!-- Buttons P2 -->
-                  <button class="showdown-btn" :class="{ active: p2Buffs.dr }" @click="toggleBuff('p2', 'dr')">+20 DP</button>
-                  <button class="showdown-btn" :class="{ active: p2Buffs.evasion }" @click="toggleBuff('p2', 'evasion')">+20 Evasion</button>
-                  <button class="showdown-btn" :class="{ active: p2Buffs.accuracy }" @click="toggleBuff('p2', 'accuracy')">+20 Accuracy</button>
-                  <button class="showdown-btn" :class="{ active: p2Buffs.critical_hit_rate }" @click="toggleBuff('p2', 'critical_hit_rate')">+30% Crit Rate</button>
-                  <button class="showdown-btn" :class="{ active: p2Buffs.critical }" @click="toggleBuff('p2', 'critical')">+5% Crit Dmg</button>
-                  <button class="showdown-btn" :class="{ active: p2Buffs.air_attack }" v-show="player2.state === 'air_attack'" @click="toggleBuff('p2', 'air_attack')">+5% Air Attack</button>
-                  <button class="showdown-btn" :class="{ active: p2Buffs.back_attack }" v-show="player2.state === 'back_attack'" @click="toggleBuff('p2', 'back_attack')">+5% Back Attack</button>
-                  <button class="showdown-btn" :class="{ active: p2Buffs.down_attack } " v-show="player2.state === 'down_attack'" @click="toggleBuff('p2', 'down_attack')">+5% Down Attack</button>
+                  <button
+                    class="showdown-btn"
+                    :class="{ active: p2Buffs.dr }"
+                    @click="toggleBuff('p2', 'dr')"
+                  >
+                    +20 DP
+                  </button>
+                  <button
+                    class="showdown-btn"
+                    :class="{ active: p2Buffs.evasion }"
+                    @click="toggleBuff('p2', 'evasion')"
+                  >
+                    +20 Evasion
+                  </button>
+                  <button
+                    class="showdown-btn"
+                    :class="{ active: p2Buffs.accuracy }"
+                    @click="toggleBuff('p2', 'accuracy')"
+                  >
+                    +20 Accuracy
+                  </button>
+                  <button
+                    class="showdown-btn"
+                    :class="{ active: p2Buffs.critical_hit_rate }"
+                    @click="toggleBuff('p2', 'critical_hit_rate')"
+                  >
+                    +30% Crit Rate
+                  </button>
+                  <button
+                    class="showdown-btn"
+                    :class="{ active: p2Buffs.critical }"
+                    @click="toggleBuff('p2', 'critical')"
+                  >
+                    +5% Crit Dmg
+                  </button>
+                  <button
+                    class="showdown-btn"
+                    :class="{ active: p2Buffs.air_attack }"
+                    v-show="player2.state === 'air_attack'"
+                    @click="toggleBuff('p2', 'air_attack')"
+                  >
+                    +5% Air Attack
+                  </button>
+                  <button
+                    class="showdown-btn"
+                    :class="{ active: p2Buffs.back_attack }"
+                    v-show="player2.state === 'back_attack'"
+                    @click="toggleBuff('p2', 'back_attack')"
+                  >
+                    +5% Back Attack
+                  </button>
+                  <button
+                    class="showdown-btn"
+                    :class="{ active: p2Buffs.down_attack }"
+                    v-show="player2.state === 'down_attack'"
+                    @click="toggleBuff('p2', 'down_attack')"
+                  >
+                    +5% Down Attack
+                  </button>
                 </div>
-                <div class="column-title p2-sub-title">Pre Debuffs Addons on Enemy</div>
+                <div class="column-title p2-sub-title">
+                  Pre Debuffs Addons on Enemy
+                </div>
                 <!-- Group: Debuffs -->
                 <div class="button-group">
-                  <button class="showdown-btn debuff" :class="{ active: p2Debuff.minusDp }" @click="toggleDebuff('p2', 'minusDp')">-20 DP</button>
-                  <button class="showdown-btn debuff" :class="{ active: p2Debuff.minusEvasion }" @click="toggleDebuff('p2', 'minusEvasion')">-20 Evasion</button>
-                  <button class="showdown-btn debuff" :class="{ active: p2Debuff.minusAccuracy }" @click="toggleDebuff('p2', 'minusAccuracy')">-20 Accuracy</button>
+                  <button
+                    class="showdown-btn debuff"
+                    :class="{ active: p2Debuff.minusDp }"
+                    @click="toggleDebuff('p2', 'minusDp')"
+                  >
+                    -20 DP
+                  </button>
+                  <button
+                    class="showdown-btn debuff"
+                    :class="{ active: p2Debuff.minusEvasion }"
+                    @click="toggleDebuff('p2', 'minusEvasion')"
+                  >
+                    -20 Evasion
+                  </button>
+                  <button
+                    class="showdown-btn debuff"
+                    :class="{ active: p2Debuff.minusAccuracy }"
+                    @click="toggleDebuff('p2', 'minusAccuracy')"
+                  >
+                    -20 Accuracy
+                  </button>
                 </div>
               </div>
-
-            </div> <!-- End of Grid -->
+            </div>
+            <!-- End of Grid -->
           </div>
         </div>
 
         <!-- Player 2 Panel -->
-        <PlayerPanel 
-          v-model="player2" 
-          label="Player 2" 
+        <PlayerPanel
+          v-model="player2"
+          label="Player 2"
           :playerNumber="2"
           :availableClasses="classes"
           :damage_type="getClassData(player1.class).damage_type"
-          @attackerState="(p2state) => player2.state = p2state"
+          @attackerState="(p2state) => (player2.state = p2state)"
         />
         <div class="import-preset">
           <div class="options-panel">
             <div class="panel-header">Import / Export</div>
             <div class="scrollable-content">
-              <input class="input is-small mb-2" type="text" placeholder="Preset Name"/>
+              <input
+                class="input is-small mb-2"
+                type="text"
+                placeholder="Preset Name"
+              />
               <textarea class="textarea is-large"></textarea>
             </div>
           </div>
-        </div>        
-
+        </div>
       </div>
     </div>
   </div>
 </template>
 
 <script>
-import { ref, computed, onMounted} from 'vue';
-import { watchDebounced } from '@vueuse/core';
-import PlayerPanel from '@/components/PlayerPanel.vue';
-import { useDamageCalculator } from '@/composables/useDamageCalculator.js';
-import classModifiers from '@/data/classModifiers.js';
-
-
+import { ref, computed, onMounted } from "vue";
+import { watchDebounced } from "@vueuse/core";
+import PlayerPanel from "@/components/PlayerPanel.vue";
+import { useDamageCalculator } from "@/composables/useDamageCalculator.js";
+import classModifiers from "@/data/classModifiers.js";
 
 export default {
-  name: 'DamageCalculator',
+  name: "DamageCalculator",
   components: {
-    PlayerPanel
+    PlayerPanel,
   },
   setup() {
-    const mode = ref('pvp');
-    
-    let classes = ref([
-      'Warrior Succession', 'Warrior Awakening', 'Sorceress Succession', 'Sorceress Awakening',
-      'Ranger Succession', 'Ranger Awakening', 'Berserker Succession', 'Berserker Awakening',
-      'Tamer Succession', 'Tamer Awakening', 'Musa Succession', 'Musa Awakening',
-      'Maehwa Succession', 'Maehwa Awakening', 'Valkyrie Succession', 'Valkyrie Awakening',
-      'Wizard Succession', 'Wizard Awakening', 'Witch Succession', 'Witch Awakening',
-      'Ninja Succession', 'Ninja Awakening', 'Kunoichi Succession','Kunoichi Awakening',
-      'Dark Knight Succession', 'Dark Knight Awakening', 'Striker Succession', 'Striker Awakening',
-      'Mystic Succession', 'Mystic Awakening', 'Lahn Succession', 'Lahn Awakening', 'Archer Awakening',
-      'Corsair Succession', 'Corsair Awakening', 'Drakania Succession', 'Drakania Awakening',
-      'Woosa Succession', 'Woosa Awakening', 'Maegu Succession', 'Maegu Awakening', 'Scholar Awakening',
-      'Hashashin Succession', 'Hashashin Awakening', 'Deadeye Awakening', 'Wukong Awakening', 'Shai Succession'
-    ]);
+    const mode = ref("pvp");
 
+    let classes = ref([
+      "Warrior Succession",
+      "Warrior Awakening",
+      "Sorceress Succession",
+      "Sorceress Awakening",
+      "Ranger Succession",
+      "Ranger Awakening",
+      "Berserker Succession",
+      "Berserker Awakening",
+      "Tamer Succession",
+      "Tamer Awakening",
+      "Musa Succession",
+      "Musa Awakening",
+      "Maehwa Succession",
+      "Maehwa Awakening",
+      "Valkyrie Succession",
+      "Valkyrie Awakening",
+      "Wizard Succession",
+      "Wizard Awakening",
+      "Witch Succession",
+      "Witch Awakening",
+      "Ninja Succession",
+      "Ninja Awakening",
+      "Kunoichi Succession",
+      "Kunoichi Awakening",
+      "Dark Knight Succession",
+      "Dark Knight Awakening",
+      "Striker Succession",
+      "Striker Awakening",
+      "Mystic Succession",
+      "Mystic Awakening",
+      "Lahn Succession",
+      "Lahn Awakening",
+      "Archer Awakening",
+      "Corsair Succession",
+      "Corsair Awakening",
+      "Drakania Succession",
+      "Drakania Awakening",
+      "Woosa Succession",
+      "Woosa Awakening",
+      "Maegu Succession",
+      "Maegu Awakening",
+      "Scholar Awakening",
+      "Hashashin Succession",
+      "Hashashin Awakening",
+      "Deadeye Awakening",
+      "Wukong Awakening",
+      "Shai Succession",
+    ]);
 
     // Player 1 - Complete stats
     const player1 = ref({
-      class: 'Warrior Succession',
-      skill_spec: 'awakening',
+      class: "Warrior Succession",
+      skill_spec: "awakening",
       total_ap_pvp: 986,
       total_aap_pvp: 988,
       sheet_ap: 383,
@@ -201,7 +401,7 @@ export default {
       skill_damage_percent: 31821,
       skill_hits: 1,
       critical_hit_rate: 50,
-      state: 'down_attack',
+      state: "down_attack",
       melee_dr: 661,
       ranged_dr: 661,
       magic_dr: 661,
@@ -211,13 +411,13 @@ export default {
       dr_percent: 30,
       class_pvp_modifier: 0.8929,
       skill_pvp_reduction_percent: 28.13,
-      hp: 12163
+      hp: 12163,
     });
 
     // Player 2 - Complete stats
     const player2 = ref({
-      class: 'Sorceress Awakening',
-      spec: 'awakening',
+      class: "Sorceress Awakening",
+      spec: "awakening",
       total_ap_pvp: 950,
       total_aap_pvp: 952,
       sheet_ap: 370,
@@ -230,7 +430,7 @@ export default {
       skill_damage_percent: 30000,
       skill_hits: 1,
       critical_hit_rate: 48,
-      state: 'normal',
+      state: "normal",
       melee_dr: 650,
       ranged_dr: 650,
       magic_dr: 650,
@@ -240,7 +440,7 @@ export default {
       dr_percent: 28,
       class_pvp_modifier: 0.85,
       skill_pvp_reduction_percent: 26.0,
-      hp: 12498
+      hp: 12498,
     });
     const p1Buffs = ref({
       dr: false,
@@ -251,7 +451,7 @@ export default {
       down_attack: false,
       back_attack: false,
       air_attack: false,
-    })
+    });
     const p2Buffs = ref({
       dr: false,
       evasion: false,
@@ -261,36 +461,35 @@ export default {
       down_attack: false,
       back_attack: false,
       air_attack: false,
-    })
+    });
     const p1Debuff = ref({
       minusDp: false,
       minusEvasion: false,
       minusAccuracy: false,
-    })
+    });
     const p2Debuff = ref({
       minusDp: false,
       minusEvasion: false,
       minusAccuracy: false,
-    })
+    });
 
-
-    const toggleDebuff = (player, debuffName)=>{
-      if(player === "p1"){
+    const toggleDebuff = (player, debuffName) => {
+      if (player === "p1") {
         p1Debuff.value[debuffName] = !p1Debuff.value[debuffName];
-      }else{
+      } else {
         p2Debuff.value[debuffName] = !p2Debuff.value[debuffName];
       }
       calculateDamage();
-    }
+    };
 
-    const toggleBuff = (player, buffName)=>{     
-      if(player === "p1"){
+    const toggleBuff = (player, buffName) => {
+      if (player === "p1") {
         p1Buffs.value[buffName] = !p1Buffs.value[buffName];
-      }else{
+      } else {
         p2Buffs.value[buffName] = !p2Buffs.value[buffName];
       }
       calculateDamage();
-    }
+    };
 
     const apiResult1to2 = ref(null);
     const apiResult2to1 = ref(null);
@@ -303,55 +502,62 @@ export default {
         const hp_loss = apiResult1to2.value.result.hp_loss;
         const hp_loss_percentage = (100 * hp_loss) / player2.value.hp;
         const damage_type = apiResult1to2.value.result.damage_type;
-        return {hp_loss: hp_loss.toFixed(2), hp_loss_percentage: hp_loss_percentage.toFixed(2), damage_type: damage_type};
+        return {
+          hp_loss: hp_loss.toFixed(2),
+          hp_loss_percentage: hp_loss_percentage.toFixed(2),
+          damage_type: damage_type,
+        };
       }
-      return { hp_loss: '---', hp_loss_percentage: '---' };
+      return { hp_loss: "---", hp_loss_percentage: "---" };
     });
 
     const hitChance1to2 = computed(() => {
       if (apiResult1to2.value) {
         return (apiResult1to2.value.result.hitrate * 100).toFixed(1);
       }
-      return '---';
+      return "---";
     });
-    
 
     const damage2to1 = computed(() => {
       if (apiResult2to1.value) {
         const hp_loss = apiResult2to1.value.result.hp_loss;
         const hp_loss_percentage = (100 * hp_loss) / player1.value.hp;
         const damage_type = apiResult2to1.value.result.damage_type;
-        return {hp_loss: hp_loss.toFixed(2), hp_loss_percentage: hp_loss_percentage.toFixed(2), damage_type: damage_type} ;
+        return {
+          hp_loss: hp_loss.toFixed(2),
+          hp_loss_percentage: hp_loss_percentage.toFixed(2),
+          damage_type: damage_type,
+        };
       }
-      return { hp_loss: '---', hp_loss_percentage: '---' };
+      return { hp_loss: "---", hp_loss_percentage: "---" };
     });
 
     const hitChance2to1 = computed(() => {
       if (apiResult2to1.value) {
         return (apiResult2to1.value.result.hitrate * 100).toFixed(1);
       }
-      return '---';
+      return "---";
     });
 
-    const parseClassAndSpec = (fullClassName) =>{
-      const parts = fullClassName.split(' ');
-      const noSpecClass = ['Archer', 'Deadeye', 'Wukong', 'Scholar'];
+    const parseClassAndSpec = (fullClassName) => {
+      const parts = fullClassName.split(" ");
+      const noSpecClass = ["Archer", "Deadeye", "Wukong", "Scholar"];
       if (noSpecClass.includes(fullClassName)) {
-        return { className: fullClassName, spec: 'absolute' };
+        return { className: fullClassName, spec: "absolute" };
       }
-      
+
       const spec = parts[parts.length - 1].toLowerCase();
-      const className = parts.slice(0, parts.length - 1).join(' ');
+      const className = parts.slice(0, parts.length - 1).join(" ");
       return { className, spec };
     };
     const getHitColor = (chance) => {
       const value = parseFloat(chance);
-      if (!value && value !== 0) return ''; // Trata nulos/undefined
-      
-      if (value >= 100) return 'text-green';
-      if (value >= 85) return 'text-yellow';
-      if (value >= 50) return 'text-orange';
-      return 'text-red';
+      if (!value && value !== 0) return ""; // Trata nulos/undefined
+
+      if (value >= 100) return "text-green";
+      if (value >= 85) return "text-yellow";
+      if (value >= 50) return "text-orange";
+      return "text-red";
     };
 
     const getClassData = (fullClassName) => {
@@ -365,46 +571,98 @@ export default {
       if (classModifiers[classKey] && classModifiers[classKey].specs[specKey]) {
         return {
           damage_type: classModifiers[classKey].specs[specKey].damage_type,
-          class_group: classModifiers[classKey].specs[specKey].group
+          class_group: classModifiers[classKey].specs[specKey].group,
         };
       }
 
-      return { damage_type: 'Melee', class_group: null };
+      return { damage_type: "Melee", class_group: null };
     };
-
-
 
     const calculateDamage = () => {
       isCalculating.value = true;
       calculationError.value = null;
-      
+
       try {
         const player1Data = parseClassAndSpec(player1.value.class);
         const player2Data = parseClassAndSpec(player2.value.class);
-        const p1_melee_dr = player1.value.melee_dr + (p1Buffs.value.dr ? 20 : 0) - (p2Debuff.value.minusDp ? 20 : 0);
-        const p2_melee_dr = player2.value.melee_dr + (p2Buffs.value.dr ? 20 : 0) - (p1Debuff.value.minusDp ? 20 : 0);
-        const p1_ranged_dr = player1.value.ranged_dr + (p1Buffs.value.dr ? 20 : 0) - (p2Debuff.value.minusDp ? 20 : 0);
-        const p2_ranged_dr = player2.value.ranged_dr + (p2Buffs.value.dr ? 20 : 0) - (p1Debuff.value.minusDp ? 20 : 0);
-        const p1_magic_dr = player1.value.magic_dr + (p1Buffs.value.dr ? 20 : 0) - (p2Debuff.value.minusDp ? 20 : 0);
-        const p2_magic_dr = player2.value.magic_dr + (p2Buffs.value.dr ? 20 : 0) - (p1Debuff.value.minusDp ? 20 : 0);
-        const p1_melee_evasion = player1.value.melee_evasion + (p1Buffs.value.evasion ? 20 : 0) - (p2Debuff.value.minusEvasion ? 20 : 0);
-        const p2_melee_evasion = player2.value.melee_evasion + (p2Buffs.value.evasion ? 20 : 0) - (p1Debuff.value.minusEvasion ? 20 : 0);
-        const p1_ranged_evasion = player1.value.ranged_evasion + (p1Buffs.value.evasion ? 20 : 0) - (p2Debuff.value.minusEvasion ? 20 : 0);
-        const p2_ranged_evasion = player2.value.ranged_evasion + (p2Buffs.value.evasion ? 20 : 0) - (p1Debuff.value.minusEvasion ? 20 : 0); 
-        const p1_magic_evasion = player1.value.magic_evasion + (p1Buffs.value.evasion ? 20 : 0) - (p2Debuff.value.minusEvasion ? 20 : 0);
-        const p2_magic_evasion = player2.value.magic_evasion + (p2Buffs.value.evasion ? 20 : 0) - (p1Debuff.value.minusEvasion ? 20 : 0);
-        const p1_accuracy = player1.value.accuracy + (p1Buffs.value.accuracy ? 20 : 0) - (p2Debuff.value.minusAccuracy ? 20 : 0);
-        const p2_accuracy = player2.value.accuracy + (p2Buffs.value.accuracy ? 20 : 0) - (p1Debuff.value.minusAccuracy ? 20 : 0);
-        const p1_critical_hit_rate = player1.value.critical_hit_rate + (p1Buffs.value.critical_hit_rate ? 30 : 0);
-        const p2_critical_hit_rate = player2.value.critical_hit_rate + (p2Buffs.value.critical_hit_rate ? 30 : 0);
-        const p1_critical = player1.value.critical + (p1Buffs.value.critical ? 5 : 0);
-        const p2_critical = player2.value.critical + (p2Buffs.value.critical ? 5 : 0);
-        const p1_back_attack = player1.value.back_attack + (p1Buffs.value.back_attack ? 5 : 0);
-        const p2_back_attack = player2.value.back_attack + (p2Buffs.value.back_attack ? 5 : 0);
-        const p1_down_attack = player1.value.down_attack + (p1Buffs.value.down_attack ? 5 : 0);
-        const p2_down_attack = player2.value.down_attack + (p2Buffs.value.down_attack ? 5 : 0);
-        const p1_air_attack = player1.value.air_attack + (p1Buffs.value.air_attack ? 5 : 0);
-        const p2_air_attack = player2.value.air_attack + (p2Buffs.value.air_attack ? 5 : 0);
+        const p1_melee_dr =
+          player1.value.melee_dr +
+          (p1Buffs.value.dr ? 20 : 0) -
+          (p2Debuff.value.minusDp ? 20 : 0);
+        const p2_melee_dr =
+          player2.value.melee_dr +
+          (p2Buffs.value.dr ? 20 : 0) -
+          (p1Debuff.value.minusDp ? 20 : 0);
+        const p1_ranged_dr =
+          player1.value.ranged_dr +
+          (p1Buffs.value.dr ? 20 : 0) -
+          (p2Debuff.value.minusDp ? 20 : 0);
+        const p2_ranged_dr =
+          player2.value.ranged_dr +
+          (p2Buffs.value.dr ? 20 : 0) -
+          (p1Debuff.value.minusDp ? 20 : 0);
+        const p1_magic_dr =
+          player1.value.magic_dr +
+          (p1Buffs.value.dr ? 20 : 0) -
+          (p2Debuff.value.minusDp ? 20 : 0);
+        const p2_magic_dr =
+          player2.value.magic_dr +
+          (p2Buffs.value.dr ? 20 : 0) -
+          (p1Debuff.value.minusDp ? 20 : 0);
+        const p1_melee_evasion =
+          player1.value.melee_evasion +
+          (p1Buffs.value.evasion ? 20 : 0) -
+          (p2Debuff.value.minusEvasion ? 20 : 0);
+        const p2_melee_evasion =
+          player2.value.melee_evasion +
+          (p2Buffs.value.evasion ? 20 : 0) -
+          (p1Debuff.value.minusEvasion ? 20 : 0);
+        const p1_ranged_evasion =
+          player1.value.ranged_evasion +
+          (p1Buffs.value.evasion ? 20 : 0) -
+          (p2Debuff.value.minusEvasion ? 20 : 0);
+        const p2_ranged_evasion =
+          player2.value.ranged_evasion +
+          (p2Buffs.value.evasion ? 20 : 0) -
+          (p1Debuff.value.minusEvasion ? 20 : 0);
+        const p1_magic_evasion =
+          player1.value.magic_evasion +
+          (p1Buffs.value.evasion ? 20 : 0) -
+          (p2Debuff.value.minusEvasion ? 20 : 0);
+        const p2_magic_evasion =
+          player2.value.magic_evasion +
+          (p2Buffs.value.evasion ? 20 : 0) -
+          (p1Debuff.value.minusEvasion ? 20 : 0);
+        const p1_accuracy =
+          player1.value.accuracy +
+          (p1Buffs.value.accuracy ? 20 : 0) -
+          (p2Debuff.value.minusAccuracy ? 20 : 0);
+        const p2_accuracy =
+          player2.value.accuracy +
+          (p2Buffs.value.accuracy ? 20 : 0) -
+          (p1Debuff.value.minusAccuracy ? 20 : 0);
+        const p1_critical_hit_rate =
+          player1.value.critical_hit_rate +
+          (p1Buffs.value.critical_hit_rate ? 30 : 0);
+        const p2_critical_hit_rate =
+          player2.value.critical_hit_rate +
+          (p2Buffs.value.critical_hit_rate ? 30 : 0);
+        const p1_critical =
+          player1.value.critical + (p1Buffs.value.critical ? 5 : 0);
+        const p2_critical =
+          player2.value.critical + (p2Buffs.value.critical ? 5 : 0);
+        const p1_back_attack =
+          player1.value.back_attack + (p1Buffs.value.back_attack ? 5 : 0);
+        const p2_back_attack =
+          player2.value.back_attack + (p2Buffs.value.back_attack ? 5 : 0);
+        const p1_down_attack =
+          player1.value.down_attack + (p1Buffs.value.down_attack ? 5 : 0);
+        const p2_down_attack =
+          player2.value.down_attack + (p2Buffs.value.down_attack ? 5 : 0);
+        const p1_air_attack =
+          player1.value.air_attack + (p1Buffs.value.air_attack ? 5 : 0);
+        const p2_air_attack =
+          player2.value.air_attack + (p2Buffs.value.air_attack ? 5 : 0);
         // Player 1 ataca Player 2
         const player1To2 = {
           attacker_class: player1Data.className,
@@ -428,10 +686,12 @@ export default {
           back_attack: p1_back_attack,
           down_attack: p1_down_attack,
           air_attack: p1_air_attack,
-          skill_damage_percent: player1.value.skill_damage_percent * player1.value.skill_hits,
-          skill_pvp_reduction_percent: player1.value.skill_pvp_reduction_percent,
+          skill_damage_percent:
+            player1.value.skill_damage_percent * player1.value.skill_hits,
+          skill_pvp_reduction_percent:
+            player1.value.skill_pvp_reduction_percent,
           critical_hit_rate: p1_critical_hit_rate,
-          state: player1.value.state
+          state: player1.value.state,
         };
 
         // Player 2 ataca Player 1
@@ -457,31 +717,34 @@ export default {
           back_attack: p2_back_attack,
           down_attack: p2_down_attack,
           air_attack: p2_air_attack,
-          skill_damage_percent: player2.value.skill_damage_percent * player2.value.skill_hits,
-          skill_pvp_reduction_percent: player2.value.skill_pvp_reduction_percent,
+          skill_damage_percent:
+            player2.value.skill_damage_percent * player2.value.skill_hits,
+          skill_pvp_reduction_percent:
+            player2.value.skill_pvp_reduction_percent,
           critical_hit_rate: p2_critical_hit_rate,
-          state: player2.value.state
+          state: player2.value.state,
         };
 
-         
         apiResult1to2.value = useDamageCalculator(player1To2);
         apiResult2to1.value = useDamageCalculator(player2To1);
-        
       } catch (error) {
-        calculationError.value = error || 'Failed to calculate damage';
-        console.error('Error during damage calculation:', error);
+        calculationError.value = error || "Failed to calculate damage";
+        console.error("Error during damage calculation:", error);
       } finally {
         isCalculating.value = false;
       }
     };
-    watchDebounced([player1, player2], ()=>{
-      calculateDamage()
-    }, { debounce: 500, maxWait: 1000, deep: true});
+    watchDebounced(
+      [player1, player2],
+      () => {
+        calculateDamage();
+      },
+      { debounce: 500, maxWait: 1000, deep: true },
+    );
 
-
-    onMounted(()=>{
-      classes.value.sort()
-      calculateDamage()
+    onMounted(() => {
+      classes.value.sort();
+      calculateDamage();
     });
 
     return {
@@ -504,8 +767,8 @@ export default {
       p1Debuff,
       p2Debuff,
       getClassData,
-    };  
-  }
+    };
+  },
 };
 </script>
 
@@ -517,7 +780,7 @@ export default {
   color: #e2e8f0;
   min-height: 100vh;
   padding-top: 8px;
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
   font-size: 10pt;
 }
 
@@ -540,8 +803,7 @@ export default {
   padding: 10px;
 }
 
-
-.header-buttons{
+.header-buttons {
   display: flex;
   flex-wrap: wrap;
   align-items: end;
@@ -558,38 +820,77 @@ export default {
   justify-content: center;
 }
 
-.result-card.p1-attacker { border-left: 3px solid #5a7ff2; }
-.result-card.p2-attacker { border-left: 3px solid #f56565; }
+.result-card.p1-attacker {
+  border-left: 3px solid #5a7ff2;
+}
+.result-card.p2-attacker {
+  border-left: 3px solid #f56565;
+}
 
-.result-header { font-size: 9pt; color: #a0aec0; margin-bottom: 4px; }
-.attacker-name { font-weight: bold; color: #e2e8f0; }
-.defender-name { font-weight: bold; color: #e2e8f0; }
+.result-header {
+  font-size: 9pt;
+  color: #a0aec0;
+  margin-bottom: 4px;
+}
+.attacker-name {
+  font-weight: bold;
+  color: #e2e8f0;
+}
+.defender-name {
+  font-weight: bold;
+  color: #e2e8f0;
+}
 
-.result-body { 
-  display: flex; 
-  justify-content: space-between; 
-  align-items: baseline; 
+.result-body {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
   margin-bottom: 4px;
 }
 
-.damage-text { font-size: 16pt; font-weight: bold; color: #e2e8f0; }
-.damage-text .percent { font-size: 12pt; color: #a0aec0; font-weight: normal; }
+.damage-text {
+  font-size: 16pt;
+  font-weight: bold;
+  color: #e2e8f0;
+}
+.damage-text .percent {
+  font-size: 12pt;
+  color: #a0aec0;
+  font-weight: normal;
+}
 
-.hit-chance { font-size: 9pt; color: #718096; }
-.hit-chance span { font-weight: bold; color: #ecc94b; }
-.text-green { color: #48bb78 !important; }   /* Green Success */
-.text-yellow { color: #ecc94b !important; }  /* Yellow Alert */
-.text-orange {color: darkorange !important; }
-.text-red { color: #f56565 !important; }     /* Red Danger */
+.hit-chance {
+  font-size: 9pt;
+  color: #718096;
+}
+.hit-chance span {
+  font-weight: bold;
+  color: #ecc94b;
+}
+.text-green {
+  color: #48bb78 !important;
+} /* Green Success */
+.text-yellow {
+  color: #ecc94b !important;
+} /* Yellow Alert */
+.text-orange {
+  color: darkorange !important;
+}
+.text-red {
+  color: #f56565 !important;
+} /* Red Danger */
 
-.result-desc { font-size: 8pt; color: #4a5568; font-style: italic; }
-
+.result-desc {
+  font-size: 8pt;
+  color: #4a5568;
+  font-style: italic;
+}
 
 /* --- STYLES OF THE MAIN GRID --- */
-.main-grid { 
-  display: grid; 
-  grid-template-columns: 33fr 29fr 33fr; 
-  gap: 0.5%; 
+.main-grid {
+  display: grid;
+  grid-template-columns: 33fr 29fr 33fr;
+  gap: 0.5%;
   width: 100%;
 }
 
@@ -643,8 +944,12 @@ export default {
   margin-bottom: 8px;
   text-transform: uppercase;
 }
-.p1-title { color: #5a7ff2; }
-.p2-title { color: #f56565; }
+.p1-title {
+  color: #5a7ff2;
+}
+.p2-title {
+  color: #f56565;
+}
 
 /* Group of Buttons (Addons, Debuffs, etc) */
 .button-group {
@@ -665,32 +970,38 @@ export default {
   line-height: 0.1em;
   margin: 10px 0 5px;
 }
-.group-label span { background:#14161a; padding:0 5px; }
+.group-label span {
+  background: #14161a;
+  padding: 0 5px;
+}
 
 /* --- THE SHOWDOWN BUTTON (FROM SCRATCH) --- */
 .showdown-btn {
   /* Reset básico */
   appearance: none;
   outline: none;
-  
+
   /* Dimensões e Forma */
   width: 100%;
   padding: 6px 0; /* Um pouco mais de altura para clique */
   border-radius: 4px; /* Cantos levemente arredondados (quase quadrados) */
-  
+
   /* Fonte */
   font-family: inherit;
   font-size: 0.6rem;
   font-weight: 500;
   text-align: center;
-  
+
   /* Cores Inativas (Flat Dark) */
   background-color: #1a1d23; /* Fundo escuro e fosco */
   color: #718096; /* Texto cinza suave */
   border: 1px solid #3e4753; /* Borda sutil para definição */
-  
+
   cursor: pointer;
-  transition: background-color 0.2s ease, color 0.2s ease, border-color 0.2s ease;
+  transition:
+    background-color 0.2s ease,
+    color 0.2s ease,
+    border-color 0.2s ease;
 }
 
 .showdown-btn:hover {
@@ -722,8 +1033,15 @@ export default {
 }
 /* Responsividade */
 @media (max-width: 1024px) {
-  .top-results-bar { grid-template-columns: 1fr; }
-  .main-grid { grid-template-columns: 1fr; }
-  .options-panel { order: -1; height: auto; } /* On mobile, options are above the players */
+  .top-results-bar {
+    grid-template-columns: 1fr;
+  }
+  .main-grid {
+    grid-template-columns: 1fr;
+  }
+  .options-panel {
+    order: -1;
+    height: auto;
+  } /* On mobile, options are above the players */
 }
 </style>

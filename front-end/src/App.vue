@@ -1,29 +1,32 @@
 <!-- App.vue -->
 <script setup>
-import { useLoading } from './composables/useLoading';
-import { watch } from 'vue';
-import Navbar from './components/Navbar.vue';
+import { useLoading } from "./composables/useLoading";
+import { watch } from "vue";
+import Navbar from "./components/Navbar.vue";
 
 const { isLoading } = useLoading();
 
 // Remove o loader inicial do HTML quando o app está pronto
-watch(isLoading, (loading) => {
-  if (loading === false) {
-    const loader = document.getElementById('app-loading');
-    if (loader) {
-      loader.style.transition = 'opacity 0.5s ease';
-      loader.style.opacity = '0';
-      loader.addEventListener('transitionend', () => loader.remove());
+watch(
+  isLoading,
+  (loading) => {
+    if (loading === false) {
+      const loader = document.getElementById("app-loading");
+      if (loader) {
+        loader.style.transition = "opacity 0.5s ease";
+        loader.style.opacity = "0";
+        loader.addEventListener("transitionend", () => loader.remove());
+      }
     }
-  }
-}, { once: true });
+  },
+  { once: true },
+);
 </script>
 
 <template>
   <div>
     <Navbar></Navbar>
     <div class="main-content-area">
-
       <!-- ESTE É O SPINNER QUE APARECE DURANTE A NAVEGAÇÃO -->
       <div v-if="isLoading" class="loading-overlay-router">
         <div class="spinner"></div>
@@ -31,7 +34,6 @@ watch(isLoading, (loading) => {
 
       <!-- O conteúdo da rota só é visível quando o loading termina -->
       <router-view v-show="!isLoading"></router-view>
-
     </div>
   </div>
 </template>

@@ -1,22 +1,19 @@
 <template>
-  <div class="home">   
-  </div>
+  <div class="home"></div>
 </template>
 
 <script>
-
 export default {
-  name: 'HomeView',
-  components: {
-  }
-}
+  name: "HomeView",
+  components: {},
+};
 </script>
 
 <style>
-:root{
+:root {
   height: 100vh;
   width: 100vw;
-  background-color: #0e0f11
+  background-color: #0e0f11;
 }
 .home {
   background-color: #0e0f11;
