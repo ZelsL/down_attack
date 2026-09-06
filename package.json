@@ -1,27 +1,23 @@
 {
-  "name": "down_attack",
-  "version": "1.0.0",
-  "description": "",
-  "main": "index.js",
+  "name": "DownAttack",
+  "type": "module",
+  "private": true,
   "scripts": {
+    "build": "nuxt build",
+    "dev": "nuxt dev",
+    "generate": "nuxt generate",
+    "preview": "nuxt preview",
+    "postinstall": "nuxt prepare",
     "lint:prettier:check": "prettier --check .",
     "lint:prettier:fix": "prettier --write .",
     "commit": "cz"
   },
-  "repository": {
-    "type": "git",
-    "url": "git+https://github.com/ZelsL/down_attack.git"
+  "dependencies": {
+    "nuxt": "^4.5.2",
+    "vue": "^3.5.42",
+    "vue-router": "^5.3.0"
   },
-  "keywords": [],
-  "author": "",
-  "license": "ISC",
-  "type": "commonjs",
-  "bugs": {
-    "url": "https://github.com/ZelsL/down_attack/issues"
-  },
-  "homepage": "https://github.com/ZelsL/down_attack#readme",
   "devDependencies": {
-    "commitizen": "^4.3.2",
     "cz-conventional-changelog": "^3.3.0",
     "prettier": "^3.9.6"
   },
