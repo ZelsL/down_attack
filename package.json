@@ -12,7 +12,7 @@
     "lint:prettier:fix": "prettier --write .",
     "commit": "cz",
     "test": "jest",
-    "test:watch": "test --watch"
+    "test:watch": "jest --watchAll --runInBand --verbose"
   },
   "dependencies": {
     "jest": "^30.5.1",
