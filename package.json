@@ -4,7 +4,7 @@
   "private": true,
   "scripts": {
     "build": "nuxt build",
-    "dev": "nuxt dev",
+    "dev": "npm run services:up && npm run services:wait:database && npm run migration:up && (trap 'npm run services:stop' INT TERM ; nuxt dev)",
     "generate": "nuxt generate",
     "preview": "nuxt preview",
     "postinstall": "nuxt prepare",
@@ -12,15 +12,27 @@
     "lint:prettier:fix": "prettier --write .",
     "commit": "cz",
     "test": "jest",
-    "test:watch": "jest --watchAll --runInBand --verbose"
+    "test:watch": "jest --watchAll --runInBand --verbose",
+    "services:up": "docker compose -f infra/compose.yaml up -d",
+    "services:stop": "docker compose -f infra/compose.yaml stop",
+    "services:down": "docker compose -f infra/compose.yaml down",
+    "services:wait:database": "node infra/scripts/wait-for-postgres.js",
+    "migration:create": "node-pg-migrate -m infra/migrations create",
+    "migration:up": "node-pg-migrate -m infra/migrations --envPath .env  up"
   },
   "dependencies": {
+    "dotenv": "^17.4.2",
+    "dotenv-expand": "^1000.0.0",
     "jest": "^30.5.1",
+    "node-pg-migrate": "^9.0.0",
     "nuxt": "^4.5.2",
+    "pg": "^8.23.0",
     "vue": "^3.5.42",
     "vue-router": "^5.3.0"
   },
   "devDependencies": {
+    "@swc/core": "^1.16.2",
+    "@swc/jest": "^0.2.39",
     "cz-conventional-changelog": "^3.3.0",
     "prettier": "^3.9.6"
   },
