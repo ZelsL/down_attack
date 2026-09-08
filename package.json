@@ -42,6 +42,7 @@
     "@eslint/json": "^2.1.0",
     "@eslint/markdown": "^8.0.3",
     "@nuxt/eslint": "^1.17.0",
+    "@secretlint/secretlint-rule-preset-recommend": "^13.0.5",
     "@swc/core": "^1.16.2",
     "@swc/jest": "^0.2.39",
     "concurrently": "^10.0.5",
@@ -50,7 +51,8 @@
     "eslint-plugin-vue": "^10.11.0",
     "globals": "^17.12.0",
     "husky": "^9.1.7",
-    "prettier": "^3.9.6"
+    "prettier": "^3.9.6",
+    "secretlint": "^13.0.5"
   },
   "config": {
     "commitizen": {
