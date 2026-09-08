@@ -1,47 +1,28 @@
-import js from "@eslint/js";
-import globals from "globals";
-import pluginVue from "eslint-plugin-vue";
-import json from "@eslint/json";
-import markdown from "@eslint/markdown";
-import css from "@eslint/css";
-import { defineConfig } from "eslint/config";
+import withNuxt from "./.nuxt/eslint.config.mjs";
 
-export default defineConfig([
+export default withNuxt(
   {
-    files: ["**/*.{js,mjs,cjs,vue}"],
-    plugins: { js },
-    extends: ["js/recommended"],
-    languageOptions: { globals: { ...globals.browser, ...globals.node } },
+    ignores: [
+      "front-end/**",
+      "back-end/**",
+      "infra/migrations/**",
+      ".nuxt/**",
+      ".output/**",
+      "dist/**",
+      "node_modules/**",
+      ".vscode/**",
+      "coverage/**",
+      "tests/**",
+      "test/**",
+      "**/*.test.{js,ts}",
+      "**/*.spec.{js,ts}",
+    ],
   },
-  pluginVue.configs["flat/essential"],
+
   {
-    files: ["**/*.json"],
-    plugins: { json },
-    language: "json/json",
-    extends: ["json/recommended"],
+    files: ["server/**/*.{js,mjs,ts}"],
+    rules: {
+      "no-unused-vars": ["error", { argsIgnorePattern: "^(event|_)" }],
+    },
   },
-  {
-    files: ["**/*.jsonc"],
-    plugins: { json },
-    language: "json/jsonc",
-    extends: ["json/recommended"],
-  },
-  {
-    files: ["**/*.json5"],
-    plugins: { json },
-    language: "json/json5",
-    extends: ["json/recommended"],
-  },
-  {
-    files: ["**/*.md"],
-    plugins: { markdown },
-    language: "markdown/gfm",
-    extends: ["markdown/recommended"],
-  },
-  {
-    files: ["**/*.css"],
-    plugins: { css },
-    language: "css/css",
-    extends: ["css/recommended"],
-  },
-]);
+);
