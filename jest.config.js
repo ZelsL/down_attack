@@ -8,5 +8,6 @@ export default {
   transform: {
     "^.+\\.(t|j)sx?$": "@swc/jest",
   },
+  transformIgnorePatterns: ["node_modules/(?!node-pg-migrate)/"],
   testTimeout: 60000,
 };
