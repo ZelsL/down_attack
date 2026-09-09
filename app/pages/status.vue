@@ -12,7 +12,6 @@
       <h2>
         <strong>Banco de Dados</strong>
       </h2>
-      <hr />
       <p>
         Versão do Postgres:
         {{ !data ? "Carregando ..." : data?.dependencies?.database?.version }}
