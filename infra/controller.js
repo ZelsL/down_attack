@@ -21,7 +21,8 @@ function onErrorHandler(error, event) {
     error instanceof ForbiddenError ||
     error instanceof ServiceError
   ) {
-    return setResponseStatus(error.statusCode).json(error);
+    setResponseStatus(event, error.statusCode);
+    return error.toJSON();
   }
 
   const publicErrorObject = new InternalServerError({
