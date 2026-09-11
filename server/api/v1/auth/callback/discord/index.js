@@ -16,6 +16,8 @@ export default controller.handle({
 
     const userObject = await user.fetchUserFromDiscord(discordCode);
 
-    return userObject;
+    const newUser = await user.create(userObject);
+
+    return newUser;
   },
 });
