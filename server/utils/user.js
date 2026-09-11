@@ -1,5 +1,9 @@
 import discord from "~~/infra/discord.js";
-import { ServiceError, ValidationError } from "~~/infra/errors.js";
+import {
+  NotFoundError,
+  ServiceError,
+  ValidationError,
+} from "~~/infra/errors.js";
 import database from "~~/infra/database.js";
 
 async function discordRedirect(event) {
@@ -121,10 +125,42 @@ async function create(userInputValues) {
   }
 }
 
+async function findOneById(id) {
+  const userFound = await runSelectQuery(id);
+
+  return userFound;
+
+  async function runSelectQuery(id) {
+    const results = await database.query({
+      text: `
+      SELECT
+        *
+      FROM
+        users
+      WHERE
+        id = $1
+      LIMIT
+        1
+      ;`,
+      values: [id],
+    });
+
+    if (results.rowCount === 0) {
+      throw new NotFoundError({
+        message: "The ID provided was not found in the system.",
+        action: "Please check if the ID is typed correctly.",
+      });
+    }
+
+    return results.rows[0];
+  }
+}
+
 const user = {
   discordRedirect,
   fetchUserFromDiscord,
   create,
+  findOneById,
 };
 
 export default user;

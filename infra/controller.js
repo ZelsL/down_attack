@@ -1,4 +1,10 @@
-import { setResponseStatus, getMethod, defineEventHandler } from "h3";
+import {
+  setResponseStatus,
+  getMethod,
+  defineEventHandler,
+  setCookie,
+} from "h3";
+
 import {
   MethodNotAllowedError,
   InternalServerError,
@@ -8,6 +14,8 @@ import {
   ServiceError,
   UnauthorizedError,
 } from "./errors.js";
+
+const EXPIRATION_IN_MILLISECONDS = 60 * 60 * 24 * 30 * 1000;
 
 function onNoMatchHandler(event) {
   const publicErrorObject = new MethodNotAllowedError();
@@ -57,10 +65,21 @@ function handle(handlers) {
   });
 }
 
+function setSessionCookie(sessionToken, event) {
+  setCookie(event, "session_id", sessionToken, {
+    path: "/",
+    maxAge: EXPIRATION_IN_MILLISECONDS / 1000,
+    secure: process.env.NODE_ENV === "production",
+    httpOnly: true,
+    sameSite: "lax",
+  });
+}
+
 const controller = {
   onNoMatchHandler,
   onErrorHandler,
   handle,
+  setSessionCookie,
 };
 
 export default controller;
