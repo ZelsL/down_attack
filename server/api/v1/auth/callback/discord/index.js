@@ -12,12 +12,24 @@ export default controller.handle({
       });
     }
 
-    const discordCode = query.code;
+    const code = query.code;
 
-    const userObject = await user.fetchUserFromDiscord(discordCode);
+    const discordUser = await user.fetchUserFromDiscord(code);
 
-    const newUser = await user.create(userObject);
+    const newUser = await user.create(discordUser);
 
-    return newUser;
+    const newSession = await session.create(newUser.id);
+
+    const cookieOptions = {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === "production",
+      sameSite: "lax",
+      maxAge: session.EXPIRATION_IN_MILLISECONDS / 1000,
+      path: "/",
+    };
+
+    setCookie(event, "session_id", newSession.token, cookieOptions);
+
+    return sendRedirect(event, "/");
   },
 });
