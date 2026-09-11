@@ -1,7 +1,10 @@
 import orchestrator from "tests/orchestrator.js";
 import webserver from "~~/infra/webserver.js";
 import { faker } from "@faker-js/faker";
-import { validate as validateUUID } from "uuid";
+import session from "~/server/utils/session.js";
+import setCookieParser from "set-cookie-parser";
+import database from "~/infra/database.js";
+import { version as uuidVersion } from "uuid";
 
 beforeAll(async () => {
   await orchestrator.waitForAllServices();
@@ -14,19 +17,44 @@ describe("GET to /api/v1/auth/callback/discord", () => {
     test("With valid code", async () => {
       const response = await fetch(
         `${webserver.origin}/api/v1/auth/callback/discord?code=${faker.string.alphanumeric(30)}`,
+        {
+          redirect: "manual",
+        },
       );
 
-      expect(response.status).toBe(200);
+      expect(response.status).toBe(302);
 
-      const responseBody = await response.json();
+      const parsedSetCookie = setCookieParser(response, {
+        map: true,
+      });
+      const sessionToken = parsedSetCookie.session_id.value;
 
-      expect(validateUUID(responseBody.id)).toBe(true);
-      expect(responseBody.discord_id.length).toEqual(18);
-      expect(responseBody.display_name).toBeDefined();
-      expect(responseBody.avatar).toBeDefined();
-      expect(responseBody.created_at > responseBody.updated_at).toBe(false);
-      expect(Date.parse(responseBody.created_at)).not.toBeNaN();
-      expect(Date.parse(responseBody.updated_at)).not.toBeNaN();
+      const sessionResult = await database.query({
+        text: `
+        SELECT
+          *
+        FROM
+          sessions
+        WHERE
+          token = $1
+        ;`,
+        values: [sessionToken],
+      });
+
+      const savedSession = sessionResult.rows[0];
+
+      expect(savedSession.token).toBe(sessionToken);
+      expect(uuidVersion(savedSession.id)).toBe(4);
+      expect(Date.parse(savedSession.expires_at)).not.toBeNaN();
+      expect(Date.parse(savedSession.created_at)).not.toBeNaN();
+
+      const expiresAt = new Date(savedSession.expires_at);
+      const createdAt = new Date(savedSession.created_at);
+
+      expiresAt.setMilliseconds(0);
+      createdAt.setMilliseconds(0);
+
+      expect(expiresAt - createdAt).toBe(session.EXPIRATION_IN_MILLISECONDS);
     });
     test("With invalid code", async () => {
       const response = await fetch(
@@ -66,17 +94,24 @@ describe("GET to /api/v1/auth/callback/discord", () => {
 
       const response = await fetch(
         `${webserver.origin}/api/v1/auth/callback/discord?code=${code}`,
+        {
+          redirect: "manual",
+        },
       );
 
-      expect(response.status).toBe(200);
-      const responseBody = await response.json();
+      expect(response.status).toBe(302);
+      const parsedSetCookie = setCookieParser(response, {
+        map: true,
+      });
 
-      expect(responseBody.discord_id).toEqual(createdUser.discord_id);
-      expect(responseBody.username).toEqual(createdUser.username);
-      expect(responseBody.created_at).toBe(
-        createdUser.created_at.toISOString(),
-      );
-      expect(responseBody.id).toBe(createdUser.id);
+      expect(parsedSetCookie.session_id).toEqual({
+        name: "session_id",
+        value: parsedSetCookie.session_id.value,
+        maxAge: session.EXPIRATION_IN_MILLISECONDS / 1000,
+        path: "/",
+        sameSite: "Lax",
+        httpOnly: true,
+      });
     });
     test("Login with username change", async () => {
       const createdUser = await orchestrator.createUser("BeforeChange");
@@ -84,20 +119,33 @@ describe("GET to /api/v1/auth/callback/discord", () => {
 
       const response = await fetch(
         `${webserver.origin}/api/v1/auth/callback/discord?code=${code}`,
+        {
+          redirect: "manual",
+        },
       );
 
-      expect(response.status).toBe(200);
-      const responseBody = await response.json();
+      expect(response.status).toBe(302);
+      expect(response.headers.get("location")).toBe("/");
 
-      expect(responseBody.discord_id).toEqual(createdUser.discord_id);
-      expect(responseBody.username).toEqual("AfterChange");
-      expect(responseBody.created_at).toBe(
+      const parsedSetCookie = setCookieParser(response, { map: true });
+      expect(parsedSetCookie.session_id.value).toBeDefined();
+
+      const userInDatabase = await database.query({
+        text: "SELECT * FROM users WHERE id = $1;",
+        values: [createdUser.id],
+      });
+
+      const updatedUser = userInDatabase.rows[0];
+
+      expect(updatedUser.id).toBe(createdUser.id);
+      expect(updatedUser.discord_id).toBe(createdUser.discord_id);
+      expect(updatedUser.username).toBe("AfterChange");
+      expect(updatedUser.created_at.toISOString()).toBe(
         createdUser.created_at.toISOString(),
       );
-      expect(responseBody.id).toBe(createdUser.id);
-      expect(
-        new Date(responseBody.updated_at).getTime(),
-      ).toBeGreaterThanOrEqual(new Date(createdUser.updated_at).getTime());
+      expect(new Date(updatedUser.updated_at).getTime()).toBeGreaterThanOrEqual(
+        new Date(createdUser.updated_at).getTime(),
+      );
     });
   });
 });
