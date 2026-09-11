@@ -31,6 +31,7 @@
     "node-pg-migrate": "9.0.0",
     "nuxt": "4.5.2",
     "pg": "8.23.0",
+    "uuid": "^14.0.2",
     "vue": "3.5.42",
     "vue-router": "5.3.0"
   },
@@ -41,6 +42,7 @@
     "@eslint/js": "9.39.5",
     "@eslint/json": "2.1.0",
     "@eslint/markdown": "8.0.3",
+    "@faker-js/faker": "^10.6.0",
     "@nuxt/eslint": "1.17.0",
     "@secretlint/secretlint-rule-preset-recommend": "13.0.5",
     "@swc/core": "1.16.2",
