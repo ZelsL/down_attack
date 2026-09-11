@@ -6,6 +6,7 @@ import {
   NotFoundError,
   ForbiddenError,
   ServiceError,
+  UnauthorizedError,
 } from "./errors.js";
 
 function onNoMatchHandler(event) {
@@ -19,7 +20,8 @@ function onErrorHandler(error, event) {
     error instanceof ValidationError ||
     error instanceof NotFoundError ||
     error instanceof ForbiddenError ||
-    error instanceof ServiceError
+    error instanceof ServiceError ||
+    error instanceof UnauthorizedError
   ) {
     setResponseStatus(event, error.statusCode);
     return error.toJSON();
