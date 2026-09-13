@@ -101,6 +101,18 @@ describe("GET to /api/v1/user", () => {
         action: "Please verify if you are logged in and try again.",
         status_code: 401,
       });
+
+      const parsedSetCookie = setCookieParser(response, {
+        map: true,
+      });
+
+      expect(parsedSetCookie.session_id).toEqual({
+        name: "session_id",
+        value: "invalid",
+        maxAge: -1,
+        path: "/",
+        httpOnly: true,
+      });
     });
     test("With nonexistent session", async () => {
       const nonexistentToken =
@@ -121,6 +133,18 @@ describe("GET to /api/v1/user", () => {
         message: "User do not have active session.",
         action: "Please verify if you are logged in and try again.",
         status_code: 401,
+      });
+
+      const parsedSetCookie = setCookieParser(response, {
+        map: true,
+      });
+
+      expect(parsedSetCookie.session_id).toEqual({
+        name: "session_id",
+        value: "invalid",
+        maxAge: -1,
+        path: "/",
+        httpOnly: true,
       });
     });
     test("With valid session but almost expired", async () => {

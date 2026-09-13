@@ -28,9 +28,14 @@ function onErrorHandler(error, event) {
     error instanceof ValidationError ||
     error instanceof NotFoundError ||
     error instanceof ForbiddenError ||
-    error instanceof ServiceError ||
-    error instanceof UnauthorizedError
+    error instanceof ServiceError
   ) {
+    setResponseStatus(event, error.statusCode);
+    return error.toJSON();
+  }
+
+  if (error instanceof UnauthorizedError) {
+    clearSessionToken(event);
     setResponseStatus(event, error.statusCode);
     return error.toJSON();
   }
