@@ -89,18 +89,11 @@ async function fetchUserFromDiscord(code) {
 }
 
 async function create(userInputValues) {
-  const newUser = await runUpsertQuery(
-    userInputValues.user.id,
-    userInputValues,
-  );
+  const newUser = await runUpsertQuery(userInputValues);
 
   return newUser;
 
-  async function runUpsertQuery(discordId, userInputValues) {
-    return await upsert(userInputValues);
-  }
-
-  async function upsert(userInputValues) {
+  async function runUpsertQuery(userInputValues) {
     const results = await database.query({
       text: `
         INSERT INTO
@@ -115,10 +108,10 @@ async function create(userInputValues) {
         RETURNING *
       ;`,
       values: [
-        userInputValues.user.id,
-        userInputValues.user.username,
-        userInputValues.user.global_name,
-        userInputValues.user.avatar,
+        userInputValues.id,
+        userInputValues.username,
+        userInputValues.global_name,
+        userInputValues.avatar,
       ],
     });
     return results.rows[0];

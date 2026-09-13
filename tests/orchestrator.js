@@ -37,27 +37,12 @@ async function createUser(username) {
   const fakeAvatar = faker.string.alphanumeric(32);
 
   const userObject = {
-    application: {
-      id: "159799960412356608",
-      name: "Down Attack",
-      icon: "300ae0e41577b4ceb9cd41d2ee91f96a",
-      description: "",
-      hook: true,
-      bot_public: true,
-      bot_require_code_grant: false,
-      verify_key:
-        "c8cde6a3c8c6e49d86af3191287b3ce255872be1fff6dc285bdb420c06a2c3c8",
-    },
-    scopes: ["guilds.join", "identify"],
-    expires: new Date(Date.now() + 604800000).toISOString(),
-    user: {
-      id: fakeUserId,
-      username: fakeUsername,
-      avatar: fakeAvatar,
-      discriminator: "0",
-      global_name: "Discord",
-      public_flags: 131072,
-    },
+    id: fakeUserId,
+    username: fakeUsername,
+    avatar: fakeAvatar,
+    discriminator: "0",
+    global_name: "Discord",
+    public_flags: 131072,
   };
 
   return await user.create(userObject);
