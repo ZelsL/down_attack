@@ -75,11 +75,21 @@ function setSessionCookie(sessionToken, event) {
   });
 }
 
+function clearSessionToken(event) {
+  setCookie(event, "session_id", "invalid", {
+    path: "/",
+    maxAge: -1,
+    secure: process.env.NODE_ENV === "production",
+    httpOnly: true,
+  });
+}
+
 const controller = {
   onNoMatchHandler,
   onErrorHandler,
   handle,
   setSessionCookie,
+  clearSessionToken,
 };
 
 export default controller;
