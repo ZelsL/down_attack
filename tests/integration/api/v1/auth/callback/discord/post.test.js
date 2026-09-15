@@ -20,8 +20,9 @@ describe("POST /api/v1/auth/callback/discord", () => {
 
       expect(responseBody).toEqual({
         name: "MethodNotAllowedError",
-        message: "Método não permitido para este endpoint.",
-        action: "Verifique se o metodo http é valido para este endpoint.",
+        message: "Method not allowed for this endpoint.",
+        action:
+          "Please verify that the HTTP method is valid for this endpoint.",
         status_code: 405,
       });
     });
