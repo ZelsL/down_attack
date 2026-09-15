@@ -4,6 +4,7 @@ import { faker } from "@faker-js/faker";
 import migrator from "~/server/utils/migrator.js";
 import user from "~/server/utils/user.js";
 import session from "~/server/utils/session.js";
+import webserver from "~/infra/webserver.js";
 
 async function waitForAllServices() {
   await waitForWebServer();
@@ -15,7 +16,7 @@ async function waitForAllServices() {
     });
 
     async function fetchStatuspage() {
-      const response = await fetch("http://localhost:3000/api/v1/status");
+      const response = await fetch(`${webserver.origin}/api/v1/status`);
       if (response.status !== 200) {
         throw Error();
       }
