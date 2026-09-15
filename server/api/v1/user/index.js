@@ -1,21 +1,24 @@
 export default controller.handle({
-  async get(event) {
-    const sessionToken = getCookie(event, "session_id");
+  get: [
+    controller.canRequest("read:session"),
+    async (event) => {
+      const sessionToken = getCookie(event, "session_id");
 
-    const sessionObject = await session.findOneValidByToken(sessionToken);
+      const sessionObject = await session.findOneValidByToken(sessionToken);
 
-    const renewedSessionObject = await session.renew(sessionObject.id);
+      const renewedSessionObject = await session.renew(sessionObject.id);
 
-    controller.setSessionCookie(renewedSessionObject.token, event);
+      controller.setSessionCookie(renewedSessionObject.token, event);
 
-    const userFound = await user.findOneById(sessionObject.user_id);
+      const userFound = await user.findOneById(sessionObject.user_id);
 
-    setHeader(
-      event,
-      "Cache-Control",
-      "no-store, no-cache, max-age=0, must-revalidate",
-    );
+      setHeader(
+        event,
+        "Cache-Control",
+        "no-store, no-cache, max-age=0, must-revalidate",
+      );
 
-    return userFound;
-  },
+      return userFound;
+    },
+  ],
 });

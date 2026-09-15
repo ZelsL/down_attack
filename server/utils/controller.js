@@ -107,15 +107,11 @@ async function injectAnonymousOrUser(event) {
   const sessionToken = getCookie(event, "session_id");
 
   if (sessionToken) {
-    try {
-      const sessionObject = await session.findOneValidByToken(sessionToken);
-      const userObject = await user.findOneById(sessionObject.user_id);
+    const sessionObject = await session.findOneValidByToken(sessionToken);
+    const userObject = await user.findOneById(sessionObject.user_id);
 
-      event.context.user = userObject;
-      return;
-    } catch {
-      // ignore invalid/expired session error and proceeds at anonymously.
-    }
+    event.context.user = userObject;
+    return;
   }
 
   injectAnonymousUser(event);
@@ -131,13 +127,13 @@ function canRequest(feature) {
   return function canRequestMiddleware(event) {
     const userTryingToRequest = event.context.user;
 
-    if (userTryingToRequest?.features?.includes(feature)) {
+    if (authorization.can(userTryingToRequest, feature)) {
       return;
     }
 
     throw new ForbiddenError({
       message: "You do not have permission to run this action.",
-      action: `Verify if you user has the feature: "${feature}"`,
+      action: `Verify if your user has the feature: "${feature}"`,
     });
   };
 }

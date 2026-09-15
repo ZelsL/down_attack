@@ -34,7 +34,7 @@ describe("GET to /api/v1/users/[username]", () => {
       expect(Date.parse(responseBody.updated_at)).not.toBeNaN();
     });
     test("With case mismatch", async () => {
-      await orchestrator.createUser("DifferentCase");
+      const user = await orchestrator.createUser("DifferentCase");
 
       const response = await fetch(
         `${webserver.origin}/api/v1/users/differentcase`,

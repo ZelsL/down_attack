@@ -91,7 +91,7 @@ async function fetchUserFromDiscord(code) {
 async function create(userInputValues) {
   const newUser = await runUpsertQuery(userInputValues);
 
-  return newUser;
+  return setFeatures(newUser.id, ["read:session"]);
 
   async function runUpsertQuery(userInputValues) {
     const results = await database.query({
@@ -114,6 +114,7 @@ async function create(userInputValues) {
         userInputValues.avatar,
       ],
     });
+
     return results.rows[0];
   }
 }
@@ -179,12 +180,37 @@ async function findOneByUsername(username) {
   }
 }
 
+async function setFeatures(userId, features) {
+  const updatedUser = await runUpdateQuery(userId, features);
+  return updatedUser;
+
+  async function runUpdateQuery(userId, features) {
+    const results = await database.query({
+      text: `
+      UPDATE
+        users
+      SET
+        features = $2,
+        updated_at = timezone('utc', now())
+      WHERE
+        id = $1
+      RETURNING
+        *
+      ;`,
+      values: [userId, features],
+    });
+
+    return results.rows[0];
+  }
+}
+
 const user = {
   discordRedirect,
   fetchUserFromDiscord,
   create,
   findOneById,
   findOneByUsername,
+  setFeatures,
 };
 
 export default user;
