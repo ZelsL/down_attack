@@ -39,4 +39,28 @@ describe("POST /api/v1/users", () => {
       expect(locationUrl.searchParams.get("scope")).toBe("identify");
     });
   });
+  describe("Default user", () => {
+    test("With unique and valid data", async () => {
+      const createdUser = await orchestrator.createUser();
+      const sessionObject = await orchestrator.createSession(createdUser);
+
+      const response = await fetch(`${webserver.origin}/api/v1/users`, {
+        method: "POST",
+        headers: {
+          Cookie: `session_id=${sessionObject.token}`,
+        },
+      });
+
+      expect(response.status).toBe(403);
+
+      const responseBody = await response.json();
+
+      expect(responseBody).toEqual({
+        action: 'Verify if your user has the feature: "create:user"',
+        message: "You do not have permission to run this action.",
+        name: "ForbiddenError",
+        status_code: 403,
+      });
+    });
+  });
 });
