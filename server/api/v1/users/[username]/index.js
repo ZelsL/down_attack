@@ -1,9 +1,19 @@
 export default controller.handle({
-  async get(event) {
-    const username = getRouterParam(event, "username");
+  get: [
+    async (event) => {
+      const userTryingToGet = event.context.user;
 
-    const userFound = await user.findOneByUsername(username);
+      const username = getRouterParam(event, "username");
 
-    return userFound;
-  },
+      const userFound = await user.findOneByUsername(username);
+
+      const secureOutputValues = authorization.filterOutput(
+        userTryingToGet,
+        "read:user",
+        userFound,
+      );
+
+      return secureOutputValues;
+    },
+  ],
 });
