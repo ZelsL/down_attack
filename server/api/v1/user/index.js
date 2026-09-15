@@ -1,23 +1,32 @@
-import controller from "~~/infra/controller.js";
-
 export default controller.handle({
-  async get(event) {
-    const sessionToken = getCookie(event, "session_id");
+  get: [
+    controller.canRequest("read:session"),
+    async (event) => {
+      const userTryingToGet = event.context.user;
 
-    const sessionObject = await session.findOneValidByToken(sessionToken);
+      const sessionToken = getCookie(event, "session_id");
 
-    const renewedSessionObject = await session.renew(sessionObject.id);
+      const sessionObject = await session.findOneValidByToken(sessionToken);
 
-    controller.setSessionCookie(renewedSessionObject.token, event);
+      const renewedSessionObject = await session.renew(sessionObject.id);
 
-    const userFound = await user.findOneById(sessionObject.user_id);
+      controller.setSessionCookie(renewedSessionObject.token, event);
 
-    setHeader(
-      event,
-      "Cache-Control",
-      "no-store, no-cache, max-age=0, must-revalidate",
-    );
+      const userFound = await user.findOneById(sessionObject.user_id);
 
-    return userFound;
-  },
+      const secureOutputValues = authorization.filterOutput(
+        userTryingToGet,
+        "read:user:self",
+        userFound,
+      );
+
+      setHeader(
+        event,
+        "Cache-Control",
+        "no-store, no-cache, max-age=0, must-revalidate",
+      );
+
+      return secureOutputValues;
+    },
+  ],
 });

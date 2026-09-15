@@ -21,6 +21,7 @@
     "services:wait:database": "node infra/scripts/wait-for-postgres.js",
     "migrations:create": "node-pg-migrate -m infra/migrations create",
     "migrations:up": "node-pg-migrate -m infra/migrations --envPath .env  up",
+    "migrations:up:dry": "node-pg-migrate -m infra/migrations --envPath .env --dry-run up",
     "prepare": "husky"
   },
   "dependencies": {

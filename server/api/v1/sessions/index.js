@@ -1,15 +1,24 @@
-import controller from "~~/infra/controller.js";
-
 export default controller.handle({
-  async delete(event) {
-    const sessionToken = getCookie(event, "session_id");
+  delete: [
+    controller.canRequest("read:session"),
+    async (event) => {
+      const userTryingToDelete = event.context.user;
 
-    const sessionObject = await session.findOneValidByToken(sessionToken);
+      const sessionToken = getCookie(event, "session_id");
 
-    const expiredSession = await session.expireById(sessionObject.id);
+      const sessionObject = await session.findOneValidByToken(sessionToken);
 
-    controller.clearSessionToken(event);
+      const expiredSession = await session.expireById(sessionObject.id);
 
-    return expiredSession;
-  },
+      const secureOutputValues = authorization.filterOutput(
+        userTryingToDelete,
+        "read:session",
+        expiredSession,
+      );
+
+      controller.clearSessionToken(event);
+
+      return secureOutputValues;
+    },
+  ],
 });

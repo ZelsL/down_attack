@@ -1,4 +1,3 @@
-import controller from "~~/infra/controller.js";
 import { ValidationError } from "~~/infra/errors.js";
 
 export default controller.handle({

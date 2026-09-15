@@ -35,6 +35,7 @@ describe("GET to /api/v1/user", () => {
         avatar: createdUser.avatar,
         discord_id: createdUser.discord_id,
         display_name: createdUser.display_name,
+        features: ["read:session", "read:status", "read:user"],
         id: createdUser.id,
         username: "UserWithValidSession",
         created_at: createdUser.created_at.toISOString(),
@@ -179,6 +180,7 @@ describe("GET to /api/v1/user", () => {
         discord_id: createdUser.discord_id,
         display_name: createdUser.display_name,
         id: createdUser.id,
+        features: ["read:session", "read:status", "read:user"],
         username: "UserWithAlmostExpiredSession",
         created_at: createdUser.created_at.toISOString(),
         updated_at: createdUser.updated_at.toISOString(),
@@ -220,15 +222,15 @@ describe("GET to /api/v1/user", () => {
     test("With no session", async () => {
       const response = await fetch(`${webserver.origin}/api/v1/user`);
 
-      expect(response.status).toBe(401);
+      expect(response.status).toBe(403);
 
       const responseBody = await response.json();
 
       expect(responseBody).toEqual({
-        name: "UnauthorizedError",
-        message: "User do not have active session.",
-        action: "Please verify if you are logged in and try again.",
-        status_code: 401,
+        name: "ForbiddenError",
+        message: "You do not have permission to run this action.",
+        action: 'Verify if your user has the feature: "read:session"',
+        status_code: 403,
       });
     });
   });

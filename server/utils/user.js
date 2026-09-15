@@ -91,7 +91,11 @@ async function fetchUserFromDiscord(code) {
 async function create(userInputValues) {
   const newUser = await runUpsertQuery(userInputValues);
 
-  return newUser;
+  return await setFeatures(newUser.id, [
+    "read:session",
+    "read:status",
+    "read:user",
+  ]);
 
   async function runUpsertQuery(userInputValues) {
     const results = await database.query({
@@ -114,6 +118,7 @@ async function create(userInputValues) {
         userInputValues.avatar,
       ],
     });
+
     return results.rows[0];
   }
 }
@@ -149,11 +154,91 @@ async function findOneById(id) {
   }
 }
 
+async function findOneByUsername(username) {
+  const userFound = await runSelectQuery(username);
+
+  return userFound;
+
+  async function runSelectQuery(username) {
+    const results = await database.query({
+      text: `
+      SELECT
+        *
+      FROM
+        users
+      WHERE
+        LOWER(username) = LOWER($1)
+      LIMIT
+        1
+      ;`,
+      values: [username],
+    });
+    if (results.rowCount === 0) {
+      throw new NotFoundError({
+        message: "Username not found.",
+        action: "Please check if the username is typed correctly.",
+      });
+    }
+
+    return results.rows[0];
+  }
+}
+
+async function setFeatures(userId, features) {
+  const updatedUser = await runUpdateQuery(userId, features);
+  return updatedUser;
+
+  async function runUpdateQuery(userId, features) {
+    const results = await database.query({
+      text: `
+      UPDATE
+        users
+      SET
+        features = $2,
+        updated_at = timezone('utc', now())
+      WHERE
+        id = $1
+      RETURNING
+        *
+      ;`,
+      values: [userId, features],
+    });
+
+    return results.rows[0];
+  }
+}
+async function addFeatures(userId, features) {
+  const updatedUser = await runUpdateQuery(userId, features);
+  return updatedUser;
+
+  async function runUpdateQuery(userId, features) {
+    const results = await database.query({
+      text: `
+      UPDATE
+        users
+      SET
+        features = array_cat(features, $2),
+        updated_at = timezone('utc', now())
+      WHERE
+        id = $1
+      RETURNING
+        *
+      ;`,
+      values: [userId, features],
+    });
+
+    return results.rows[0];
+  }
+}
+
 const user = {
   discordRedirect,
   fetchUserFromDiscord,
   create,
   findOneById,
+  findOneByUsername,
+  setFeatures,
+  addFeatures,
 };
 
 export default user;

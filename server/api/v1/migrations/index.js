@@ -1,19 +1,39 @@
-import controller from "~~/infra/controller.js";
-
 export default controller.handle({
-  async get(event) {
-    const pendingMigrations = await migrator.listPendingMigrations();
-    return pendingMigrations;
-  },
+  get: [
+    controller.canRequest("read:migrations"),
+    async (event) => {
+      const userTryingToGet = event.context.user;
 
-  async post(event) {
-    const migratedMigrations = await migrator.runPendingMigrations();
+      const pendingMigrations = await migrator.listPendingMigrations();
 
-    if (migratedMigrations.length > 0) {
-      setResponseStatus(event, 201);
-      return migratedMigrations;
-    }
+      const secureOutputValues = authorization.filterOutput(
+        userTryingToGet,
+        "read:migrations",
+        pendingMigrations,
+      );
 
-    return migratedMigrations;
-  },
+      return secureOutputValues;
+    },
+  ],
+  post: [
+    controller.canRequest("run:migrations"),
+    async (event) => {
+      const userTryingToPost = event.context.user;
+
+      const migratedMigrations = await migrator.runPendingMigrations();
+
+      const secureOutputValues = authorization.filterOutput(
+        userTryingToPost,
+        "read:migrations",
+        migratedMigrations,
+      );
+
+      if (migratedMigrations.length > 0) {
+        setResponseStatus(event, 201);
+        return secureOutputValues;
+      }
+
+      return secureOutputValues;
+    },
+  ],
 });

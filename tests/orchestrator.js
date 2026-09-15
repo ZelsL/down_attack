@@ -53,12 +53,19 @@ async function createSession(user) {
   return await session.create(userId);
 }
 
+async function addFeaturesToUser(userObject, features) {
+  const updatedUser = await user.addFeatures(userObject.id, features);
+
+  return updatedUser;
+}
+
 const orchestrator = {
   waitForAllServices,
   clearDatabase,
   runPendingMigrations,
   createUser,
   createSession,
+  addFeaturesToUser,
 };
 
 export default orchestrator;
