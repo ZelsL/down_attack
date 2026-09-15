@@ -149,11 +149,42 @@ async function findOneById(id) {
   }
 }
 
+async function findOneByUsername(username) {
+  const userFound = await runSelectQuery(username);
+
+  return userFound;
+
+  async function runSelectQuery(username) {
+    const results = await database.query({
+      text: `
+      SELECT
+        *
+      FROM
+        users
+      WHERE
+        LOWER(username) = LOWER($1)
+      LIMIT
+        1
+      ;`,
+      values: [username],
+    });
+    if (results.rowCount === 0) {
+      throw new NotFoundError({
+        message: "Username not found.",
+        action: "Please check if the username is typed correctly.",
+      });
+    }
+
+    return results.rows[0];
+  }
+}
+
 const user = {
   discordRedirect,
   fetchUserFromDiscord,
   create,
   findOneById,
+  findOneByUsername,
 };
 
 export default user;

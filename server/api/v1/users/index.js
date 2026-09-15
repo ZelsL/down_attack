@@ -1,7 +1,8 @@
-import controller from "~~/infra/controller.js";
-
 export default controller.handle({
-  async post(event) {
-    return user.discordRedirect(event);
-  },
+  post: [
+    controller.canRequest("create:user"),
+    async (event) => {
+      return user.discordRedirect(event);
+    },
+  ],
 });

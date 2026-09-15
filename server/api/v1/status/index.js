@@ -1,5 +1,4 @@
 import database from "~~/infra/database";
-import controller from "~~/infra/controller.js";
 
 export default controller.handle({
   async get(event) {

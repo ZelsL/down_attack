@@ -1,4 +1,3 @@
-import controller from "~~/infra/controller.js";
 import { faker } from "@faker-js/faker";
 import { setResponseStatus, readBody } from "h3";
 

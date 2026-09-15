@@ -1,5 +1,3 @@
-import controller from "~~/infra/controller.js";
-
 export default controller.handle({
   async get(event) {
     const pendingMigrations = await migrator.listPendingMigrations();
