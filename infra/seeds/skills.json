@@ -1,0 +1,57 @@
+[
+  {
+    "id": 5487,
+    "name": "Aal's Command",
+    "class_name": "Hashashin",
+    "skill_spec": "Absolute",
+    "crit_hit_rate": 50,
+    "is_air_attack": true,
+    "is_down_attack": true,
+    "pvp_damage": 36.27,
+    "cooldown": 7,
+    "self_buffs": {
+      "all_ap": 20,
+      "duration": 10,
+      "recover": 128
+    },
+    "hits": [
+      {
+        "description": "Attack 1 damage 2896% x1, max 2 hits",
+        "damage_percent": 2896,
+        "hit_count": 2,
+        "is_air_attack": true,
+        "is_down_attack": true
+      },
+      {
+        "description": "Attack 2 damage 2896% x2",
+        "damage_percent": 2896,
+        "hit_count": 2,
+        "is_air_attack": true,
+        "is_down_attack": true
+      },
+      {
+        "description": "Last attack damage 6516% x2",
+        "damage_percent": 6516,
+        "hit_count": 2,
+        "is_air_attack": true,
+        "is_down_attack": true
+      }
+    ]
+  },
+  {
+    "id": 5619,
+    "name": "Aal's Grace",
+    "class_name": "Hashashin",
+    "skill_spec": "Awakening",
+    "cooldown": 180,
+    "is_sa": true,
+    "self_buffs": {
+      "all_ap": 20,
+      "crit_hit_rate": 30,
+      "accuracy": 30,
+      "attack_speed": 20,
+      "critical_hit_dmg": 30,
+      "duration": 30
+    }
+  }
+]
