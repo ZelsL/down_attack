@@ -3,8 +3,8 @@ import fsp from "node:fs/promises";
 import path from "node:path";
 import dotenv from "dotenv";
 import dotenvExpand from "dotenv-expand";
+import { runner } from "node-pg-migrate";
 import database from "../database.js";
-import migrator from "../../server/utils/migrator.js";
 
 if (fs.existsSync(".env")) {
   dotenvExpand.expand(dotenv.config());
@@ -15,12 +15,6 @@ async function runSeed() {
     console.log("⚠️ No database environment variables found. Skipping seed.");
     return;
   }
-
-  console.log("🔄 Running pending migrations before seed...");
-  await migrator.runPendingMigrations();
-
-  console.log("🌱 Starting skills database seed...\n");
-  const startTime = Date.now();
 
   const seedsPath = path.resolve("infra", "seeds", "skills.json");
   const fileContent = await fsp.readFile(seedsPath, "utf-8");
@@ -41,6 +35,19 @@ async function runSeed() {
   const client = await database.getNewClient();
 
   try {
+    console.log("🔄 Running pending migrations before seed...");
+    await runner({
+      dir: path.resolve("infra", "migrations"),
+      direction: "up",
+      log: () => {},
+      migrationsTable: "pgmigrations",
+      dbClient: client,
+      dryRun: false,
+    });
+
+    console.log("🌱 Starting skills database seed...\n");
+    const startTime = Date.now();
+
     await client.query("BEGIN;");
 
     // 1. Bulk upsert all skills in a single query
