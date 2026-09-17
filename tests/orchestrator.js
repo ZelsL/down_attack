@@ -3,6 +3,7 @@ import retry from "async-retry";
 import { faker } from "@faker-js/faker";
 import migrator from "~/server/utils/migrator.js";
 import user from "~/server/utils/user.js";
+import skills from "~/server/utils/skills.js";
 import session from "~/server/utils/session.js";
 import webserver from "~/infra/webserver.js";
 
@@ -60,6 +61,31 @@ async function addFeaturesToUser(userObject, features) {
   return updatedUser;
 }
 
+async function createSkill(skillObject) {
+  const defaultSkillObject = {
+    id: 5608,
+    name: `Aal's Dominion IV`,
+    class_name: "Hashashin",
+    skill_spec: "Absolute",
+    crit_hit_rate: 100,
+    is_floating: true,
+    is_air_attack: true,
+    pvp_damage: 58.48,
+    cooldown: 7,
+    hits: [
+      {
+        description: "1st hit",
+        damage_percent: 2130,
+        hit_count: 2,
+        is_air_attack: true,
+        is_floating: true,
+      },
+    ],
+  };
+
+  return await skills.create(skillObject ? skillObject : defaultSkillObject);
+}
+
 const orchestrator = {
   waitForAllServices,
   clearDatabase,
@@ -67,6 +93,7 @@ const orchestrator = {
   createUser,
   createSession,
   addFeaturesToUser,
+  createSkill,
 };
 
 export default orchestrator;
