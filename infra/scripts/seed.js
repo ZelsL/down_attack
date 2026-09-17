@@ -1,26 +1,199 @@
-import fs from "node:fs/promises";
+import fs from "node:fs";
+import fsp from "node:fs/promises";
 import path from "node:path";
-import skills from "../../server/utils/skills.js";
+import dotenv from "dotenv";
+import dotenvExpand from "dotenv-expand";
+import database from "../database.js";
+import migrator from "../../server/utils/migrator.js";
+
+if (fs.existsSync(".env")) {
+  dotenvExpand.expand(dotenv.config());
+}
 
 async function runSeed() {
-  console.log("🌱 Iniciando o seed de skills no banco de dados...\n");
-
-  const seedsPath = path.resolve("infra", "seeds", "skills.json");
-
-  const fileContent = await fs.readFile(seedsPath, "utf-8");
-  const skillsData = JSON.parse(fileContent);
-
-  for (const skill of skillsData) {
-    await skills.create(skill);
-    console.log(` > ✅ Skill inserida: ${skill.name} (${skill.id})`);
+  if (!process.env.POSTGRES_HOST) {
+    console.log("⚠️ No database environment variables found. Skipping seed.");
+    return;
   }
 
-  console.log(
-    `\n🚀 Sucesso! ${skillsData.length} skills foram adicionadas ao catálogo!`,
-  );
+  console.log("🔄 Running pending migrations before seed...");
+  await migrator.runPendingMigrations();
+
+  console.log("🌱 Starting skills database seed...\n");
+  const startTime = Date.now();
+
+  const seedsPath = path.resolve("infra", "seeds", "skills.json");
+  const fileContent = await fsp.readFile(seedsPath, "utf-8");
+  const skillsData = JSON.parse(fileContent);
+
+  const allHits = [];
+  for (const skill of skillsData) {
+    if (Array.isArray(skill.hits)) {
+      for (const hit of skill.hits) {
+        allHits.push({
+          skill_id: skill.id,
+          ...hit,
+        });
+      }
+    }
+  }
+
+  const client = await database.getNewClient();
+
+  try {
+    await client.query("BEGIN;");
+
+    // 1. Bulk upsert all skills in a single query
+    await client.query(
+      `
+      INSERT INTO skills (
+        id,
+        name,
+        class_name,
+        skill_spec,
+        cooldown,
+        crit_hit_rate,
+        pvp_damage,
+        icon_path,
+        is_sa,
+        is_fg,
+        is_if,
+        is_down_attack,
+        is_air_attack,
+        is_down_smash,
+        is_air_smash,
+        is_knockback,
+        is_knockdown,
+        is_stun,
+        is_floating,
+        is_stiffness,
+        is_bound,
+        is_grapple,
+        is_freezing,
+        self_buffs
+      )
+      SELECT
+        (item->>'id')::integer,
+        item->>'name',
+        item->>'class_name',
+        item->>'skill_spec',
+        COALESCE((item->>'cooldown')::numeric, 0),
+        COALESCE((item->>'crit_hit_rate')::numeric, 0),
+        COALESCE((item->>'pvp_damage')::numeric, 0),
+        COALESCE(item->>'icon_path', '/icons/default_skill.webp'),
+        COALESCE((item->>'is_sa')::boolean, false),
+        COALESCE((item->>'is_fg')::boolean, false),
+        COALESCE((item->>'is_if')::boolean, false),
+        COALESCE((item->>'is_down_attack')::boolean, false),
+        COALESCE((item->>'is_air_attack')::boolean, false),
+        COALESCE((item->>'is_down_smash')::boolean, false),
+        COALESCE((item->>'is_air_smash')::boolean, false),
+        COALESCE((item->>'is_knockback')::boolean, false),
+        COALESCE((item->>'is_knockdown')::boolean, false),
+        COALESCE((item->>'is_stun')::boolean, false),
+        COALESCE((item->>'is_floating')::boolean, false),
+        COALESCE((item->>'is_stiffness')::boolean, false),
+        COALESCE((item->>'is_bound')::boolean, false),
+        COALESCE((item->>'is_grapple')::boolean, false),
+        COALESCE((item->>'is_freezing')::boolean, false),
+        COALESCE((item->'self_buffs')::jsonb, '[]'::jsonb)
+      FROM jsonb_array_elements($1::jsonb) AS item
+      ON CONFLICT (id) DO UPDATE SET
+        name = EXCLUDED.name,
+        class_name = EXCLUDED.class_name,
+        skill_spec = EXCLUDED.skill_spec,
+        cooldown = EXCLUDED.cooldown,
+        crit_hit_rate = EXCLUDED.crit_hit_rate,
+        pvp_damage = EXCLUDED.pvp_damage,
+        icon_path = EXCLUDED.icon_path,
+        is_sa = EXCLUDED.is_sa,
+        is_fg = EXCLUDED.is_fg,
+        is_if = EXCLUDED.is_if,
+        is_down_attack = EXCLUDED.is_down_attack,
+        is_air_attack = EXCLUDED.is_air_attack,
+        is_down_smash = EXCLUDED.is_down_smash,
+        is_air_smash = EXCLUDED.is_air_smash,
+        is_knockback = EXCLUDED.is_knockback,
+        is_knockdown = EXCLUDED.is_knockdown,
+        is_stun = EXCLUDED.is_stun,
+        is_floating = EXCLUDED.is_floating,
+        is_stiffness = EXCLUDED.is_stiffness,
+        is_bound = EXCLUDED.is_bound,
+        is_grapple = EXCLUDED.is_grapple,
+        is_freezing = EXCLUDED.is_freezing,
+        self_buffs = EXCLUDED.self_buffs,
+        updated_at = timezone('utc', now());
+    `,
+      [JSON.stringify(skillsData)],
+    );
+
+    await client.query("DELETE FROM skills_hits;");
+
+    if (allHits.length > 0) {
+      await client.query(
+        `
+        INSERT INTO skills_hits (
+          skill_id,
+          description,
+          damage_percent,
+          hit_count,
+          is_sa,
+          is_fg,
+          is_if,
+          is_down_attack,
+          is_air_attack,
+          is_down_smash,
+          is_air_smash,
+          is_knockback,
+          is_knockdown,
+          is_stun,
+          is_floating,
+          is_stiffness,
+          is_bound,
+          is_grapple,
+          is_freezing
+        )
+        SELECT
+          (item->>'skill_id')::integer,
+          item->>'description',
+          COALESCE((item->>'damage_percent')::numeric, 0),
+          COALESCE((item->>'hit_count')::integer, 1),
+          COALESCE((item->>'is_sa')::boolean, false),
+          COALESCE((item->>'is_fg')::boolean, false),
+          COALESCE((item->>'is_if')::boolean, false),
+          COALESCE((item->>'is_down_attack')::boolean, false),
+          COALESCE((item->>'is_air_attack')::boolean, false),
+          COALESCE((item->>'is_down_smash')::boolean, false),
+          COALESCE((item->>'is_air_smash')::boolean, false),
+          COALESCE((item->>'is_knockback')::boolean, false),
+          COALESCE((item->>'is_knockdown')::boolean, false),
+          COALESCE((item->>'is_stun')::boolean, false),
+          COALESCE((item->>'is_floating')::boolean, false),
+          COALESCE((item->>'is_stiffness')::boolean, false),
+          COALESCE((item->>'is_bound')::boolean, false),
+          COALESCE((item->>'is_grapple')::boolean, false),
+          COALESCE((item->>'is_freezing')::boolean, false)
+        FROM json_array_elements($1::json) AS item;
+      `,
+        [JSON.stringify(allHits)],
+      );
+    }
+
+    await client.query("COMMIT;");
+
+    const duration = ((Date.now() - startTime) / 1000).toFixed(2);
+    console.log(
+      `🚀 Success! ${skillsData.length} skills and ${allHits.length} hits synchronized to the database in ${duration}s!`,
+    );
+  } catch (error) {
+    await client.query("ROLLBACK;");
+    throw error;
+  } finally {
+    await client.end();
+  }
 }
 
 runSeed().catch((error) => {
-  console.error("\n❌ Erro ao rodar o seed:", error);
+  console.error("\n❌ Error running seed:", error);
   process.exit(1);
 });

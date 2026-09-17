@@ -3,7 +3,7 @@
   "type": "module",
   "private": true,
   "scripts": {
-    "build": "nuxt build",
+    "build": "node infra/scripts/seed.js && nuxt build",
     "dev": "npm run services:up && npm run services:wait:database && npm run migrations:up && (trap 'npm run services:stop' INT TERM ; nuxt dev)",
     "generate": "nuxt generate",
     "preview": "nuxt preview",
