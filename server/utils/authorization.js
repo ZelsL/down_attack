@@ -22,6 +22,12 @@ const availableFeatures = [
 
   "read:status",
   "read:status:all",
+
+  // SKILLS
+
+  "create:skill",
+  "update:skill",
+  "delete:skill",
 ];
 
 function can(user, feature, resource) {
