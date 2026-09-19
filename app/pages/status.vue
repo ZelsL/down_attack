@@ -1,5 +1,5 @@
 <template>
-  <div>
+  <div class="p-4">
     <div>
       Última atualização:
       {{
@@ -37,6 +37,23 @@
 </template>
 
 <script setup>
+definePageMeta({
+  header: {
+    name: "Status",
+    icon: "/icons/status.png",
+  },
+});
+
+const header = useHeader();
+header.value = {
+  name: "Status",
+  icon: "/icons/status.png",
+};
+
+onUnmounted(() => {
+  header.value = null;
+});
+
 const { data, refresh } = await useFetch("/api/v1/status");
 
 let timer = null;

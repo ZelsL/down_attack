@@ -16,6 +16,7 @@ export default withNuxt(
       "test/**",
       "**/*.test.{js,ts}",
       "**/*.spec.{js,ts}",
+      "public/**",
     ],
   },
 
@@ -23,6 +24,22 @@ export default withNuxt(
     files: ["server/**/*.{js,mjs,ts}"],
     rules: {
       "no-unused-vars": ["error", { argsIgnorePattern: "^(event|_)" }],
+    },
+  },
+
+  {
+    files: ["**/*.vue"],
+    rules: {
+      "vue/html-self-closing": [
+        "error",
+        {
+          html: {
+            void: "always",
+            normal: "always",
+            component: "always",
+          },
+        },
+      ],
     },
   },
 );
