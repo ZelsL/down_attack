@@ -46,6 +46,7 @@
     "@secretlint/secretlint-rule-preset-recommend": "13.0.5",
     "@swc/core": "1.16.2",
     "@swc/jest": "0.2.39",
+    "autoprefixer": "^10.6.1",
     "concurrently": "10.0.5",
     "cz-conventional-changelog": "3.3.0",
     "dotenv": "^17.4.2",
@@ -55,9 +56,11 @@
     "globals": "17.12.0",
     "husky": "9.1.7",
     "jest": "^30.5.1",
+    "postcss": "^8.5.28",
     "prettier": "3.9.6",
     "secretlint": "13.0.5",
-    "set-cookie-parser": "^3.1.2"
+    "set-cookie-parser": "^3.1.2",
+    "tailwindcss": "^3.4.19"
   },
   "config": {
     "commitizen": {

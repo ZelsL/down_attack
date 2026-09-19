@@ -1,0 +1,34 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+body {
+  color: #ffedd4;
+}
+
+@layer utilities {
+  .bg-bdo-canvas {
+    background-color: #17181d;
+  }
+  .bg-bdo-window {
+    background-color: #242428;
+  }
+  .bg-bdo-card {
+    background-color: #383535;
+  }
+  .text-bdo-gold {
+    color: #f3be43 !important;
+  }
+  .text-bdo-label {
+    color: #c2b39a !important;
+  }
+  .text-bdo-title {
+    color: #fff3e1 !important;
+  }
+  .border-bdo-window {
+    border-color: #6b5537;
+  }
+  .border-bdo-card {
+    border-color: #4a4338;
+  }
+}

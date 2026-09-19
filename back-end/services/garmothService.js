@@ -46,39 +46,35 @@ export default class GarmothService {
 
     const convertedData = {
       class_name: classesMap[buildData.class] || "Unknown",
+      spec: specMap[buildData.spec] || "Awakening",
 
-      class_spec: specMap[buildData.spec] || "Awakening",
+      hp: Number(stats.hp?.toFixed(0)) || 0,
 
-      total_ap_pvp: stats.adventureap?.toFixed(2) || 0,
-      total_aap_pvp: stats.adventureaap?.toFixed(2) || 0,
-      sheet_ap: stats.ap?.toFixed(1) || 0,
-      sheet_aap: stats.aap?.toFixed(1) || 0,
+      // AP
+      ap: Number(stats.ap?.toFixed(1)) || 0,
+      aap: Number(stats.aap?.toFixed(1)) || 0,
+      adventureap: Number(stats.adventureap?.toFixed(2)) || 0,
+      adventureaap: Number(stats.adventureaap?.toFixed(2)) || 0,
 
-      melee_dr: stats.mldr?.toFixed(0) || 0,
-      ranged_dr: stats.radr?.toFixed(0) || 0,
-      magic_dr: stats.madr?.toFixed(0) || 0,
+      // DR
+      mldr: Number(stats.mldr?.toFixed(0)) || 0,
+      radr: Number(stats.radr?.toFixed(0)) || 0,
+      madr: Number(stats.madr?.toFixed(0)) || 0,
 
-      accuracy: stats.acc?.toFixed(0) || 0,
+      // Accuracy & Evasion
+      acc: Number(stats.acc?.toFixed(0)) || 0,
+      meev: Number(stats.meev?.toFixed(0)) || 0,
+      raev: Number(stats.raev?.toFixed(0)) || 0,
+      maev: Number(stats.maev?.toFixed(0)) || 0,
 
-      melee_evasion: stats.meev?.toFixed(0) || 0,
-      ranged_evasion: stats.raev?.toFixed(0) || 0,
-      magic_evasion: stats.maev?.toFixed(0) || 0,
+      // Reductions & Modifiers
+      bdrp: Number(stats.bdrp?.toFixed(0)) || 0,
+      chrp: Number(stats.chrp?.toFixed(0)) || 0,
+      chc: Number(stats.chc?.toFixed(2)) || 0,
 
-      dr_percent: stats.bdrp?.toFixed(0) || 0,
-      critical: stats.chrp?.toFixed(0) || 0,
-
-      back_attack: stats.abad?.toFixed(0) || 0,
-      down_attack: stats.adad?.toFixed(0) || 0,
-      air_attack: stats.aaad?.toFixed(0) || 0,
-
-      skill_damage_percent: 30000,
-      skill_pvp_reduction_percent: 30,
-
-      critical_hit_rate: stats.chc?.toFixed(2) || 0,
-      hp: stats.hp?.toFixed(0) || 0,
-
-      skill_spec: specMap[buildData.spec] || "Awakening",
-      attacker_state: "normal",
+      abad: Number(stats.abad?.toFixed(0)) || 0,
+      adad: Number(stats.adad?.toFixed(0)) || 0,
+      aaad: Number(stats.aaad?.toFixed(0)) || 0,
     };
 
     return convertedData;
