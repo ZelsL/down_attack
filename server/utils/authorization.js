@@ -28,6 +28,14 @@ const availableFeatures = [
   "create:skill",
   "update:skill",
   "delete:skill",
+
+  // PRESETS
+
+  "create:preset",
+  "update:preset",
+  "update:preset:others",
+  "delete:preset",
+  "delete:preset:others",
 ];
 
 function can(user, feature, resource) {
@@ -44,6 +52,22 @@ function can(user, feature, resource) {
     authorized = false;
 
     if (user.id === resource.id || can(user, "update:user:others")) {
+      authorized = true;
+    }
+  }
+
+  if (feature === "update:preset" && resource) {
+    authorized = false;
+
+    if (user.id === resource.user_id || can(user, "update:preset:others")) {
+      authorized = true;
+    }
+  }
+
+  if (feature === "delete:preset" && resource) {
+    authorized = false;
+
+    if (user.id === resource.user_id || can(user, "delete:preset:others")) {
       authorized = true;
     }
   }

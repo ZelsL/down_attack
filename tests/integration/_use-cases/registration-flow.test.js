@@ -89,7 +89,14 @@ describe("Use case: Registration flow (all successful)", () => {
       display_name: expect.any(String),
       avatar: expect.any(String),
       discord_id: expectedDiscordId,
-      features: ["read:session", "read:status", "read:user"],
+      features: [
+        "read:session",
+        "read:status",
+        "read:user",
+        "create:preset",
+        "update:preset",
+        "delete:preset",
+      ],
       created_at: expect.any(String),
       updated_at: expect.any(String),
     });
