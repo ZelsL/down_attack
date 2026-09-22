@@ -95,6 +95,9 @@ async function create(userInputValues) {
     "read:session",
     "read:status",
     "read:user",
+    "create:preset",
+    "update:preset",
+    "delete:preset",
   ]);
 
   async function runUpsertQuery(userInputValues) {

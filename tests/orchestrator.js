@@ -5,6 +5,7 @@ import migrator from "~/server/utils/migrator.js";
 import user from "~/server/utils/user.js";
 import skills from "~/server/utils/skills.js";
 import session from "~/server/utils/session.js";
+import preset from "~/server/utils/preset.js";
 import webserver from "~/infra/webserver.js";
 
 async function waitForAllServices() {
@@ -86,6 +87,22 @@ async function createSkill(skillObject) {
   return await skills.create(skillObject ? skillObject : defaultSkillObject);
 }
 
+async function createPreset(presetObject, user) {
+  const defaultPresetObject = {
+    class_name: "Hashashin",
+    spec: "Awakening",
+    is_public: true,
+  };
+
+  return await preset.create(
+    {
+      ...defaultPresetObject,
+      ...presetObject,
+    },
+    user,
+  );
+}
+
 const orchestrator = {
   waitForAllServices,
   clearDatabase,
@@ -94,6 +111,7 @@ const orchestrator = {
   createSession,
   addFeaturesToUser,
   createSkill,
+  createPreset,
 };
 
 export default orchestrator;
