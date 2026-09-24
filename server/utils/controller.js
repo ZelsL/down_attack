@@ -14,6 +14,7 @@ import {
   ForbiddenError,
   ServiceError,
   UnauthorizedError,
+  TooManyRequestsError,
 } from "~~/infra/errors.js";
 
 import session from "./session.js";
@@ -32,7 +33,8 @@ function onErrorHandler(error, event) {
     error instanceof ValidationError ||
     error instanceof NotFoundError ||
     error instanceof ForbiddenError ||
-    error instanceof ServiceError
+    error instanceof ServiceError ||
+    error instanceof TooManyRequestsError
   ) {
     setResponseStatus(event, error.statusCode);
     return error.toJSON();
