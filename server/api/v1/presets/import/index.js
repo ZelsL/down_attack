@@ -15,7 +15,7 @@ export default controller.handle({
       const buildPosition = body.position;
 
       switch (provider) {
-        case "garmoth":
+        case "garmoth": {
           const clientIp =
             getHeader(event, "x-forwarded-for") ||
             getRequestIP(event, { xForwardedFor: true }) ||
@@ -48,6 +48,7 @@ export default controller.handle({
           }
           characterObject = await garmoth.findAllById(characterId);
           return characterObject;
+        }
         default:
           throw new ValidationError({
             message: "Invalid provider, valid options are: 'garmoth",

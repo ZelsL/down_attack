@@ -35,6 +35,7 @@ async function getCharacterBuilds(id) {
     throw new ServiceError({
       message: "Garmoth service is unavaible.",
       action: "Please try again after few minutes.",
+      cause: error,
     });
   }
 
