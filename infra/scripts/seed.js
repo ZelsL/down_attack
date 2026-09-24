@@ -20,6 +20,13 @@ async function runSeed() {
   const fileContent = await fsp.readFile(seedsPath, "utf-8");
   const skillsData = JSON.parse(fileContent);
 
+  const presetsPath = path.resolve("infra", "seeds", "presets.json");
+  let presetsData = [];
+  if (fs.existsSync(presetsPath)) {
+    const presetsContent = await fsp.readFile(presetsPath, "utf-8");
+    presetsData = JSON.parse(presetsContent);
+  }
+
   const allHits = [];
   for (const skill of skillsData) {
     if (Array.isArray(skill.hits)) {
@@ -186,11 +193,95 @@ async function runSeed() {
       );
     }
 
+    if (presetsData.length > 0) {
+      await client.query(
+        `
+        INSERT INTO presets (
+          id,
+          user_id,
+          name,
+          class_name,
+          spec,
+          hp,
+          ap,
+          aap,
+          adventureap,
+          adventureaap,
+          mldr,
+          radr,
+          madr,
+          acc,
+          meev,
+          raev,
+          maev,
+          bdrp,
+          chrp,
+          chc,
+          abad,
+          adad,
+          aaad,
+          is_public
+        )
+        SELECT
+          (item->>'id')::uuid,
+          (item->>'user_id')::uuid,
+          item->>'name',
+          item->>'class_name',
+          item->>'spec',
+          COALESCE((item->>'hp')::integer, 0),
+          COALESCE((item->>'ap')::numeric, 0),
+          COALESCE((item->>'aap')::numeric, 0),
+          COALESCE((item->>'adventureap')::numeric, 0),
+          COALESCE((item->>'adventureaap')::numeric, 0),
+          COALESCE((item->>'mldr')::integer, 0),
+          COALESCE((item->>'radr')::integer, 0),
+          COALESCE((item->>'madr')::integer, 0),
+          COALESCE((item->>'acc')::integer, 0),
+          COALESCE((item->>'meev')::integer, 0),
+          COALESCE((item->>'raev')::integer, 0),
+          COALESCE((item->>'maev')::integer, 0),
+          COALESCE((item->>'bdrp')::numeric, 0),
+          COALESCE((item->>'chrp')::numeric, 0),
+          COALESCE((item->>'chc')::numeric, 0),
+          COALESCE((item->>'abad')::numeric, 0),
+          COALESCE((item->>'adad')::numeric, 0),
+          COALESCE((item->>'aaad')::numeric, 0),
+          COALESCE((item->>'is_public')::boolean, true)
+        FROM jsonb_array_elements($1::jsonb) AS item
+        ON CONFLICT (id) DO UPDATE SET
+          name = EXCLUDED.name,
+          class_name = EXCLUDED.class_name,
+          spec = EXCLUDED.spec,
+          hp = EXCLUDED.hp,
+          ap = EXCLUDED.ap,
+          aap = EXCLUDED.aap,
+          adventureap = EXCLUDED.adventureap,
+          adventureaap = EXCLUDED.adventureaap,
+          mldr = EXCLUDED.mldr,
+          radr = EXCLUDED.radr,
+          madr = EXCLUDED.madr,
+          acc = EXCLUDED.acc,
+          meev = EXCLUDED.meev,
+          raev = EXCLUDED.raev,
+          maev = EXCLUDED.maev,
+          bdrp = EXCLUDED.bdrp,
+          chrp = EXCLUDED.chrp,
+          chc = EXCLUDED.chc,
+          abad = EXCLUDED.abad,
+          adad = EXCLUDED.adad,
+          aaad = EXCLUDED.aaad,
+          is_public = EXCLUDED.is_public,
+          updated_at = timezone('utc', now());
+      `,
+        [JSON.stringify(presetsData)],
+      );
+    }
+
     await client.query("COMMIT;");
 
     const duration = ((Date.now() - startTime) / 1000).toFixed(2);
     console.log(
-      `🚀 Success! ${skillsData.length} skills and ${allHits.length} hits synchronized to the database in ${duration}s!`,
+      `🚀 Success! ${skillsData.length} skills, ${allHits.length} hits, and ${presetsData.length} presets synchronized to the database in ${duration}s!`,
     );
   } catch (error) {
     await client.query("ROLLBACK;");
