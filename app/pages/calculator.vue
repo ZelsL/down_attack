@@ -12,7 +12,7 @@
           {{ player2Object.class_name || "Player 2" }}:
         </span>
         <strong class="text-xs font-bold text-[#d7ad70] ml-1">
-          {{ simulatedDamageP1toP2.toLocaleString() }} ({{ p1DamagePercent }}%)
+          {{ calculateDamageP1toP2.toLocaleString() }} ({{ p1DamagePercent }}%)
         </strong>
       </div>
 
@@ -27,7 +27,7 @@
           {{ player1Object.class_name || "Player 1" }}:
         </span>
         <strong class="text-xs font-bold text-[#d7ad70] ml-1">
-          {{ simulatedDamageP2toP1.toLocaleString() }} ({{ p2DamagePercent }}%)
+          {{ calculateDamageP2toP1.toLocaleString() }} ({{ p2DamagePercent }}%)
         </strong>
       </div>
     </div>
@@ -42,18 +42,19 @@
           v-model="player1Object"
           title="Player 1"
           :opponent="player2Object"
+          :presets="presets"
         />
       </div>
 
       <!-- Center Column: Buffs (Showdown Field Card) -->
       <div class="p-[4%] flex flex-col justify-start">
-        <BuffPanel
+        <!-- <BuffPanel
           v-model:active-p1-skills="activeP1Skills"
           v-model:active-p2-skills="activeP2Skills"
           v-model:active-general-buffs="activeGeneralBuffs"
           :player1="player1Object"
           :player2="player2Object"
-        />
+        /> -->
       </div>
 
       <!-- Player 2 Column -->
@@ -62,6 +63,7 @@
           v-model="player2Object"
           title="Player 2"
           :opponent="player1Object"
+          :presets="presets"
         />
       </div>
     </div>
@@ -70,6 +72,8 @@
 
 <script setup>
 import { ref, computed } from "vue";
+
+const { data: presets } = await useFetch("/api/v1/presets");
 
 const CLASS_DAMAGE_TYPES = {
   warrior: "melee",
@@ -110,21 +114,8 @@ const CLASS_DAMAGE_TYPES = {
   dosa: "melee",
 };
 
-function getDamageType(className) {
-  const name = (className || "").toLowerCase().trim();
-  for (const [cls, type] of Object.entries(CLASS_DAMAGE_TYPES)) {
-    if (name.includes(cls)) return type;
-  }
-  return "melee";
-}
-
-function getRelevantDr(player, attackerDamageType) {
-  if (attackerDamageType === "magic") return Number(player.madr) || 0;
-  if (attackerDamageType === "ranged") return Number(player.radr) || 0;
-  return Number(player.mldr) || 0;
-}
-
 const player1Object = ref({
+  name: "",
   class_name: "Hashashin",
   spec: "Awakening",
 
@@ -155,9 +146,11 @@ const player1Object = ref({
   abad: 0,
   adad: 0,
   aaad: 0,
+  combo: [],
 });
 
 const player2Object = ref({
+  name: "",
   class_name: "Warrior",
   spec: "Awakening",
 
@@ -188,6 +181,7 @@ const player2Object = ref({
   abad: 0,
   adad: 0,
   aaad: 0,
+  combo: [],
 });
 
 const activeP1Skills = ref([]);
@@ -200,6 +194,9 @@ const GENERAL_BUFF_VALUES = {
   villa: { ap: 10, dr: 10 },
   draught: { ap: 35, dr: -15 },
 };
+
+updatePlayer(player1Object.value, presets.value[0]);
+updatePlayer(player2Object.value, presets.value[0]);
 
 const SKILL_BUFF_STATS = {
   5619: { ap: 20, dr: 0 }, // Aal's Grace
@@ -246,35 +243,51 @@ const p2BuffsTotal = computed(() => {
   return { ap, dr };
 });
 
-const simulatedDamageP1toP2 = computed(() => {
-  const ap =
-    (Number(player1Object.value.adventureap) || 0) + p1BuffsTotal.value.ap;
-  const p1DmgType = getDamageType(player1Object.value.class_name);
-  const dr =
-    getRelevantDr(player2Object.value, p1DmgType) + p2BuffsTotal.value.dr;
-  const raw = Math.max(0, (ap - dr * 0.75) * 4);
-  return Math.round(raw);
+const calculateDamageP1toP2 = computed(() => {
+  if (!player1Object.value.combo || player1Object.value.combo.length === 0) {
+    return 0;
+  }
+
+  return calculateComboDamage(
+    player1Object.value,
+    player2Object.value,
+    player1Object.value.combo,
+  );
 });
 
 const p1DamagePercent = computed(() => {
   const hp = Number(player2Object.value.hp) || 1;
-  return Math.min(100, Math.round((simulatedDamageP1toP2.value / hp) * 100));
+  return Math.min(100, Math.round((calculateDamageP1toP2.value / hp) * 100));
 });
 
-const simulatedDamageP2toP1 = computed(() => {
-  const ap =
-    (Number(player2Object.value.adventureap) || 0) + p2BuffsTotal.value.ap;
-  const p2DmgType = getDamageType(player2Object.value.class_name);
-  const dr =
-    getRelevantDr(player1Object.value, p2DmgType) + p1BuffsTotal.value.dr;
-  const raw = Math.max(0, (ap - dr * 0.75) * 4);
-  return Math.round(raw);
+const calculateDamageP2toP1 = computed(() => {
+  if (!player2Object.value.combo || player2Object.value.combo.length === 0) {
+    return 0;
+  }
+
+  return calculateComboDamage(
+    player2Object.value,
+    player1Object.value,
+    player2Object.value.combo,
+  );
 });
 
 const p2DamagePercent = computed(() => {
   const hp = Number(player1Object.value.hp) || 1;
-  return Math.min(100, Math.round((simulatedDamageP2toP1.value / hp) * 100));
+  return Math.min(100, Math.round((calculateDamageP2toP1.value / hp) * 100));
 });
+
+function updatePlayer(player, preset) {
+  if (!player || !preset) return;
+
+  const presetKeys = Object.keys(preset);
+
+  for (const key of presetKeys) {
+    if (key in player) {
+      player[key] = preset[key];
+    }
+  }
+}
 
 useHead({
   title: "Calculator",
