@@ -22,6 +22,7 @@ async function create(skillObject) {
   async function runInsertSkillQuery(skillObject) {
     const skillData = {
       id: skillObject.id,
+      command: skillObject.command || null,
       name: skillObject.name,
       class_name: skillObject.class_name,
       skill_spec: skillObject.skill_spec,
@@ -162,6 +163,7 @@ async function update(skillId, updateData) {
 
   const allowedColumns = [
     "name",
+    "command",
     "class_name",
     "skill_spec",
     "cooldown",

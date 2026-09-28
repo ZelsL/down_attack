@@ -63,6 +63,7 @@ async function runSeed() {
       INSERT INTO skills (
         id,
         name,
+        command,
         class_name,
         skill_spec,
         cooldown,
@@ -89,6 +90,7 @@ async function runSeed() {
       SELECT
         (item->>'id')::integer,
         item->>'name',
+        item->>'command',
         item->>'class_name',
         item->>'skill_spec',
         COALESCE((item->>'cooldown')::numeric, 0),
@@ -114,6 +116,7 @@ async function runSeed() {
       FROM jsonb_array_elements($1::jsonb) AS item
       ON CONFLICT (id) DO UPDATE SET
         name = EXCLUDED.name,
+        command = EXCLUDED.command,
         class_name = EXCLUDED.class_name,
         skill_spec = EXCLUDED.skill_spec,
         cooldown = EXCLUDED.cooldown,
