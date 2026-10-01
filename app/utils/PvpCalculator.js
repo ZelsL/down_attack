@@ -16,6 +16,9 @@ export class PvpCalculator {
   }
 
   setupClassMatchup() {
+    this.dr = Number(this.defender.mldr) || 0;
+    this.evasion = Number(this.defender.meev) || 0;
+
     const attackerName = (this.attacker.class_name || "").toLowerCase();
     const defenderName = (this.defender.class_name || "").toLowerCase();
 

@@ -238,26 +238,44 @@
             <!-- Down Attack Hits -->
             <div
               class="flex items-center justify-between bg-[#18181c] border rounded px-2.5 py-1.5 transition-colors"
-              :class="
-                hit.down_hits > 0
-                  ? 'border-[#d7ad70]/60 bg-[#d7ad70]/10'
-                  : 'border-[#ffedd4]/10'
+              :class="[
+                !hit.is_down_attack
+                  ? 'opacity-40 border-[#ffedd4]/5 cursor-not-allowed'
+                  : hit.down_hits > 0
+                    ? 'border-[#d7ad70]/60 bg-[#d7ad70]/10'
+                    : 'border-[#ffedd4]/10',
+              ]"
+              :title="
+                !hit.is_down_attack
+                  ? 'This skill does not possess Down Attack property'
+                  : ''
               "
             >
-              <span
-                class="text-[11px] font-medium"
-                :class="
-                  hit.down_hits > 0
-                    ? 'text-[#d7ad70] font-bold'
-                    : 'text-[#ffedd4]'
-                "
-              >
-                Down Attack
-              </span>
+              <div class="flex items-center gap-1.5">
+                <span
+                  class="text-[11px] font-medium"
+                  :class="
+                    hit.down_hits > 0
+                      ? 'text-[#d7ad70] font-bold'
+                      : 'text-[#ffedd4]'
+                  "
+                >
+                  Down Attack
+                </span>
+                <!-- Indicador N/A opcional para deixar claro -->
+                <span
+                  v-if="!hit.is_down_attack"
+                  class="text-[9px] text-[#ffedd4]/40 italic"
+                >
+                  (N/A)
+                </span>
+              </div>
+
               <div class="flex items-center gap-1.5">
                 <button
                   type="button"
-                  class="w-5 h-5 flex items-center justify-center text-xs bg-[#141417] hover:bg-[#ffedd4]/10 border border-[#ffedd4]/20 rounded text-[#ffedd4] cursor-pointer"
+                  :disabled="!hit.is_down_attack"
+                  class="w-5 h-5 flex items-center justify-center text-xs bg-[#141417] hover:bg-[#ffedd4]/10 border border-[#ffedd4]/20 rounded text-[#ffedd4] disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer"
                   @click="adjustHitCount(hit, 'down', -1, $event)"
                 >
                   -
@@ -272,7 +290,8 @@
                 </span>
                 <button
                   type="button"
-                  class="w-5 h-5 flex items-center justify-center text-xs bg-[#141417] hover:bg-[#ffedd4]/10 border border-[#ffedd4]/20 rounded text-[#ffedd4] cursor-pointer"
+                  :disabled="!hit.is_down_attack"
+                  class="w-5 h-5 flex items-center justify-center text-xs bg-[#141417] hover:bg-[#ffedd4]/10 border border-[#ffedd4]/20 rounded text-[#ffedd4] disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer"
                   @click="adjustHitCount(hit, 'down', 1, $event)"
                 >
                   +
@@ -330,26 +349,43 @@
             <!-- Air Attack Hits -->
             <div
               class="flex items-center justify-between bg-[#18181c] border rounded px-2.5 py-1.5 transition-colors"
-              :class="
-                hit.air_hits > 0
-                  ? 'border-[#d7ad70]/60 bg-[#d7ad70]/10'
-                  : 'border-[#ffedd4]/10'
+              :class="[
+                !hit.is_air_attack
+                  ? 'opacity-40 border-[#ffedd4]/5 cursor-not-allowed'
+                  : hit.air_hits > 0
+                    ? 'border-[#d7ad70]/60 bg-[#d7ad70]/10'
+                    : 'border-[#ffedd4]/10',
+              ]"
+              :title="
+                !hit.is_air_attack
+                  ? 'This skill does not possess Air Attack property'
+                  : ''
               "
             >
-              <span
-                class="text-[11px] font-medium"
-                :class="
-                  hit.air_hits > 0
-                    ? 'text-[#d7ad70] font-bold'
-                    : 'text-[#ffedd4]'
-                "
-              >
-                Air Attack
-              </span>
+              <div class="flex items-center gap-1.5">
+                <span
+                  class="text-[11px] font-medium"
+                  :class="
+                    hit.air_hits > 0
+                      ? 'text-[#d7ad70] font-bold'
+                      : 'text-[#ffedd4]'
+                  "
+                >
+                  Air Attack
+                </span>
+                <span
+                  v-if="!hit.is_air_attack"
+                  class="text-[9px] text-[#ffedd4]/40 italic"
+                >
+                  (N/A)
+                </span>
+              </div>
+
               <div class="flex items-center gap-1.5">
                 <button
                   type="button"
-                  class="w-5 h-5 flex items-center justify-center text-xs bg-[#141417] hover:bg-[#ffedd4]/10 border border-[#ffedd4]/20 rounded text-[#ffedd4] cursor-pointer"
+                  :disabled="!hit.is_air_attack"
+                  class="w-5 h-5 flex items-center justify-center text-xs bg-[#141417] hover:bg-[#ffedd4]/10 border border-[#ffedd4]/20 rounded text-[#ffedd4] disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer"
                   @click="adjustHitCount(hit, 'air', -1, $event)"
                 >
                   -
@@ -357,16 +393,15 @@
                 <span
                   class="w-5 text-center text-xs font-bold font-mono"
                   :class="
-                    hit.air_hits > 0
-                      ? 'text-[#d7ad70] font-bold'
-                      : 'text-[#ffedd4]'
+                    hit.air_hits > 0 ? 'text-[#d7ad70]' : 'text-[#ffedd4]'
                   "
                 >
                   {{ hit.air_hits }}
                 </span>
                 <button
                   type="button"
-                  class="w-5 h-5 flex items-center justify-center text-xs bg-[#141417] hover:bg-[#ffedd4]/10 border border-[#ffedd4]/20 rounded text-[#ffedd4] cursor-pointer"
+                  :disabled="!hit.is_air_attack"
+                  class="w-5 h-5 flex items-center justify-center text-xs bg-[#141417] hover:bg-[#ffedd4]/10 border border-[#ffedd4]/20 rounded text-[#ffedd4] disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer"
                   @click="adjustHitCount(hit, 'air', 1, $event)"
                 >
                   +
@@ -424,6 +459,7 @@ const filteredAvailableSkills = computed(() => {
 
 function addSkillToCombo(skill) {
   const newSkillinstance = {
+    ...skill,
     instanceId: crypto.randomUUID(),
     id: skill.id,
     name: skill.name,
@@ -432,6 +468,7 @@ function addSkillToCombo(skill) {
     hits: (skill.hits || []).map((hit) => {
       const count = Number(hit.hit_count) || 1;
       return {
+        ...hit,
         id: hit.id,
         description: hit.description,
         damage_percent: Number(hit.damage_percent) || 0,
@@ -440,8 +477,6 @@ function addSkillToCombo(skill) {
         down_hits: 0,
         back_hits: 0,
         air_hits: 0,
-        has_down_attack: Boolean(hit.is_down_attack),
-        has_air_attack: Boolean(hit.is_air_attack),
       };
     }),
   };
@@ -526,6 +561,11 @@ function adjustHitCount(hit, type, delta, event) {
   const isShift = Boolean(event?.shiftKey);
   const key = `${type}_hits`;
   const currentVal = hit[key] || 0;
+
+  if (delta > 0) {
+    if (type === "down" && !selectSkill.value?.is_down_attack) return;
+    if (type === "air" && !selectSkill.value?.is_air_attack) return;
+  }
 
   if (delta < 0) {
     hit[key] = isShift ? 0 : Math.max(0, currentVal - 1);

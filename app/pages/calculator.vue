@@ -48,13 +48,18 @@
 
       <!-- Center Column: Buffs (Showdown Field Card) -->
       <div class="p-[4%] flex flex-col justify-start">
-        <!-- <BuffPanel
-          v-model:active-p1-skills="activeP1Skills"
-          v-model:active-p2-skills="activeP2Skills"
-          v-model:active-general-buffs="activeGeneralBuffs"
+        <BuffPanel
+          v-model:p1-modifiers="p1Buffs"
+          v-model:p2-modifiers="p2Buffs"
           :player1="player1Object"
           :player2="player2Object"
-        /> -->
+        />
+
+        <ImportExportPanel
+          :player1="player1Object"
+          :player2="player2Object"
+          @add-preset="handleNewPreset"
+        />
       </div>
 
       <!-- Player 2 Column -->
@@ -75,44 +80,44 @@ import { ref, computed } from "vue";
 
 const { data: presets } = await useFetch("/api/v1/presets");
 
-const CLASS_DAMAGE_TYPES = {
-  warrior: "melee",
-  ranger: "ranged",
-  sorceress: "magic",
-  berserker: "melee",
-  zerker: "melee",
-  tamer: "melee",
-  musa: "melee",
-  maehwa: "melee",
-  valkyrie: "melee",
-  valk: "melee",
-  kunoichi: "melee",
-  kuno: "melee",
-  ninja: "melee",
-  wizard: "magic",
-  wiz: "magic",
-  witch: "magic",
-  darkknight: "magic",
-  dk: "magic",
-  striker: "melee",
-  mystic: "melee",
-  lahn: "melee",
-  archer: "ranged",
-  shai: "melee",
-  guardian: "melee",
-  hashashin: "magic",
-  hash: "magic",
-  nova: "melee",
-  sage: "magic",
-  corsair: "melee",
-  drakania: "melee",
-  drak: "melee",
-  woosa: "magic",
-  maegu: "magic",
-  scholar: "melee",
-  "do-sa": "melee",
-  dosa: "melee",
-};
+// const CLASS_DAMAGE_TYPES = {
+//   warrior: "melee",
+//   ranger: "ranged",
+//   sorceress: "magic",
+//   berserker: "melee",
+//   zerker: "melee",
+//   tamer: "melee",
+//   musa: "melee",
+//   maehwa: "melee",
+//   valkyrie: "melee",
+//   valk: "melee",
+//   kunoichi: "melee",
+//   kuno: "melee",
+//   ninja: "melee",
+//   wizard: "magic",
+//   wiz: "magic",
+//   witch: "magic",
+//   darkknight: "magic",
+//   dk: "magic",
+//   striker: "melee",
+//   mystic: "melee",
+//   lahn: "melee",
+//   archer: "ranged",
+//   shai: "melee",
+//   guardian: "melee",
+//   hashashin: "magic",
+//   hash: "magic",
+//   nova: "melee",
+//   sage: "magic",
+//   corsair: "melee",
+//   drakania: "melee",
+//   drak: "melee",
+//   woosa: "magic",
+//   maegu: "magic",
+//   scholar: "melee",
+//   "do-sa": "melee",
+//   dosa: "melee",
+// };
 
 const player1Object = ref({
   name: "",
@@ -184,96 +189,99 @@ const player2Object = ref({
   combo: [],
 });
 
-const activeP1Skills = ref([]);
-const activeP2Skills = ref([]);
-const activeGeneralBuffs = ref([]);
+const p1Buffs = ref({});
+const p2Buffs = ref({});
 
-const GENERAL_BUFF_VALUES = {
-  cron: { ap: 30, dr: 15 },
-  church: { ap: 8, dr: 8 },
-  villa: { ap: 10, dr: 10 },
-  draught: { ap: 35, dr: -15 },
-};
+const effectivePlayer1 = computed(() => {
+  const p = player1Object.value;
+  const b = p1Buffs.value || {};
+
+  return {
+    ...p,
+    hp: (Number(p.hp) || 0) + (b.max_hp || 0),
+    ap: (Number(p.ap) || 0) + (b.all_ap || 0),
+    aap: (Number(p.aap) || 0) + (b.all_ap || 0),
+    adventureap: (Number(p.adventureap) || 0) + (b.all_ap || 0),
+    adventureaap: (Number(p.adventureaap) || 0) + (b.all_ap || 0),
+    acc: (Number(p.acc) || 0) + (b.acc || 0),
+    mldr: Math.max(0, (Number(p.mldr) || 0) + (b.mldr || 0)),
+    radr: Math.max(0, (Number(p.radr) || 0) + (b.radr || 0)),
+    madr: Math.max(0, (Number(p.madr) || 0) + (b.madr || 0)),
+    meev: Math.max(0, (Number(p.meev) || 0) + (b.meev || 0)),
+    raev: Math.max(0, (Number(p.raev) || 0) + (b.raev || 0)),
+    maev: Math.max(0, (Number(p.maev) || 0) + (b.maev || 0)),
+    chc: (Number(p.chc) || 0) + (b.chc || 0),
+    chrp: (Number(p.chrp) || 0) + (b.crit_damage || 0),
+    abad: (Number(p.abad) || 0) + (b.abad || 0),
+    adad: (Number(p.adad) || 0) + (b.adad || 0),
+    aaad: (Number(p.aaad) || 0) + (b.aaad || 0),
+  };
+});
+
+const effectivePlayer2 = computed(() => {
+  const p = player2Object.value;
+  const b = p2Buffs.value || {};
+
+  return {
+    ...p,
+    hp: (Number(p.hp) || 0) + (b.max_hp || 0),
+    ap: (Number(p.ap) || 0) + (b.all_ap || 0),
+    aap: (Number(p.aap) || 0) + (b.all_ap || 0),
+    adventureap: (Number(p.adventureap) || 0) + (b.all_ap || 0),
+    adventureaap: (Number(p.adventureaap) || 0) + (b.all_ap || 0),
+    acc: (Number(p.acc) || 0) + (b.acc || 0),
+    mldr: Math.max(0, (Number(p.mldr) || 0) + (b.mldr || 0)),
+    radr: Math.max(0, (Number(p.radr) || 0) + (b.radr || 0)),
+    madr: Math.max(0, (Number(p.madr) || 0) + (b.madr || 0)),
+    meev: Math.max(0, (Number(p.meev) || 0) + (b.meev || 0)),
+    raev: Math.max(0, (Number(p.raev) || 0) + (b.raev || 0)),
+    maev: Math.max(0, (Number(p.maev) || 0) + (b.maev || 0)),
+    chc: (Number(p.chc) || 0) + (b.chc || 0),
+    chrp: (Number(p.chrp) || 0) + (b.crit_damage || 0),
+    abad: (Number(p.abad) || 0) + (b.abad || 0),
+    adad: (Number(p.adad) || 0) + (b.adad || 0),
+    aaad: (Number(p.aaad) || 0) + (b.aaad || 0),
+  };
+});
 
 updatePlayer(player1Object.value, presets.value[0]);
 updatePlayer(player2Object.value, presets.value[0]);
 
-const SKILL_BUFF_STATS = {
-  5619: { ap: 20, dr: 0 }, // Aal's Grace
-  5649: { ap: 20, dr: 0 }, // Crown Kick
-  5617: { ap: 0, dr: 0 }, // Flow: Sand Warp
-  1764: { ap: 45, dr: 0 }, // Executioner
-  1744: { ap: 32, dr: 20 }, // Greatsword Defense
-  995: { ap: 0, dr: 20 }, // War Cry III
-};
-
-const p1BuffsTotal = computed(() => {
-  let ap = 0;
-  let dr = 0;
-  for (const bId of activeGeneralBuffs.value) {
-    if (GENERAL_BUFF_VALUES[bId]) {
-      ap += GENERAL_BUFF_VALUES[bId].ap;
-      dr += GENERAL_BUFF_VALUES[bId].dr;
-    }
-  }
-  for (const sId of activeP1Skills.value) {
-    if (SKILL_BUFF_STATS[sId]) {
-      ap += SKILL_BUFF_STATS[sId].ap;
-      dr += SKILL_BUFF_STATS[sId].dr;
-    }
-  }
-  return { ap, dr };
-});
-
-const p2BuffsTotal = computed(() => {
-  let ap = 0;
-  let dr = 0;
-  for (const bId of activeGeneralBuffs.value) {
-    if (GENERAL_BUFF_VALUES[bId]) {
-      ap += GENERAL_BUFF_VALUES[bId].ap;
-      dr += GENERAL_BUFF_VALUES[bId].dr;
-    }
-  }
-  for (const sId of activeP2Skills.value) {
-    if (SKILL_BUFF_STATS[sId]) {
-      ap += SKILL_BUFF_STATS[sId].ap;
-      dr += SKILL_BUFF_STATS[sId].dr;
-    }
-  }
-  return { ap, dr };
-});
-
 const calculateDamageP1toP2 = computed(() => {
-  if (!player1Object.value.combo || player1Object.value.combo.length === 0) {
+  if (
+    !effectivePlayer1.value.combo ||
+    effectivePlayer1.value.combo.length === 0
+  ) {
     return 0;
   }
-
   return calculateComboDamage(
-    player1Object.value,
-    player2Object.value,
-    player1Object.value.combo,
+    effectivePlayer1.value,
+    effectivePlayer2.value,
+    effectivePlayer1.value.combo,
   );
 });
 
 const p1DamagePercent = computed(() => {
-  const hp = Number(player2Object.value.hp) || 1;
+  const hp = Number(effectivePlayer2.value.hp) || 1;
   return Math.min(100, Math.round((calculateDamageP1toP2.value / hp) * 100));
 });
 
 const calculateDamageP2toP1 = computed(() => {
-  if (!player2Object.value.combo || player2Object.value.combo.length === 0) {
+  if (
+    !effectivePlayer2.value.combo ||
+    effectivePlayer2.value.combo.length === 0
+  ) {
     return 0;
   }
-
   return calculateComboDamage(
-    player2Object.value,
-    player1Object.value,
-    player2Object.value.combo,
+    effectivePlayer2.value,
+    effectivePlayer1.value,
+    effectivePlayer2.value.combo,
   );
 });
 
 const p2DamagePercent = computed(() => {
-  const hp = Number(player1Object.value.hp) || 1;
+  const hp = Number(effectivePlayer1.value.hp) || 1;
   return Math.min(100, Math.round((calculateDamageP2toP1.value / hp) * 100));
 });
 
@@ -288,6 +296,85 @@ function updatePlayer(player, preset) {
     }
   }
 }
+function saveToLocal() {
+  localStorage.setItem(
+    "downattack:calculator-draf",
+    JSON.stringify({
+      player1Object: player1Object.value,
+      player2Object: player2Object.value,
+    }),
+  );
+}
+
+function saveCustomPresetToLocal(preset) {
+  try {
+    const raw = localStorage.getItem("downattack:custom-presets");
+    const customList = raw ? JSON.parse(raw) : [];
+    customList.push(preset);
+    localStorage.setItem(
+      "downattack:custom-presets",
+      JSON.stringify(customList),
+    );
+  } catch (error) {
+    console.error("Failed to save custom preset to localStorage:", error);
+  }
+}
+
+function loadLocal() {
+  const calculatorDraf = localStorage.getItem("downattack:calculator-draf");
+  if (calculatorDraf) {
+    try {
+      const parsedData = JSON.parse(calculatorDraf);
+      if (parsedData.player1Object)
+        player1Object.value = parsedData.player1Object;
+      if (parsedData.player2Object)
+        player2Object.value = parsedData.player2Object;
+    } catch (error) {
+      console.error("Failed to load draft from localStorage:", error);
+    }
+  }
+
+  try {
+    const rawCustom = localStorage.getItem("downattack:custom-presets");
+    if (rawCustom) {
+      const storedPresets = JSON.parse(rawCustom);
+      if (Array.isArray(storedPresets) && storedPresets.length > 0) {
+        // Evita duplicar se já existir por ID
+        const existingIds = new Set((presets.value || []).map((p) => p.id));
+        const newOnes = storedPresets.filter((p) => !existingIds.has(p.id));
+
+        presets.value = [...(presets.value || []), ...newOnes];
+      }
+    }
+  } catch (error) {
+    console.error("Failed to load custom presets from localStorage:", error);
+  }
+}
+
+function handleNewPreset(newBuild) {
+  if (!newBuild) return;
+
+  const presetToAdd = {
+    ...newBuild,
+    id: newBuild.id || crypto.randomUUID(),
+  };
+
+  presets.value = [...(presets.value || []), presetToAdd];
+
+  saveCustomPresetToLocal(presetToAdd);
+}
+
+onMounted(() => {
+  loadLocal();
+
+  window.addEventListener("beforeunload", saveToLocal);
+});
+
+onUnmounted(() => {
+  window.removeEventListener("beforeunload", saveToLocal);
+
+  saveToLocal();
+});
 
 useHead({
   title: "Calculator",
