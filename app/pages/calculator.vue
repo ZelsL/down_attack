@@ -12,7 +12,7 @@
           {{ player2Object.class_name || "Player 2" }}:
         </span>
         <strong class="text-xs font-bold text-[#d7ad70] ml-1">
-          {{ simulatedDamageP1toP2.toLocaleString() }} ({{ p1DamagePercent }}%)
+          {{ calculateDamageP1toP2.toLocaleString() }} ({{ p1DamagePercent }}%)
         </strong>
       </div>
 
@@ -27,7 +27,7 @@
           {{ player1Object.class_name || "Player 1" }}:
         </span>
         <strong class="text-xs font-bold text-[#d7ad70] ml-1">
-          {{ simulatedDamageP2toP1.toLocaleString() }} ({{ p2DamagePercent }}%)
+          {{ calculateDamageP2toP1.toLocaleString() }} ({{ p2DamagePercent }}%)
         </strong>
       </div>
     </div>
@@ -42,17 +42,23 @@
           v-model="player1Object"
           title="Player 1"
           :opponent="player2Object"
+          :presets="presets"
         />
       </div>
 
       <!-- Center Column: Buffs (Showdown Field Card) -->
       <div class="p-[4%] flex flex-col justify-start">
         <BuffPanel
-          v-model:active-p1-skills="activeP1Skills"
-          v-model:active-p2-skills="activeP2Skills"
-          v-model:active-general-buffs="activeGeneralBuffs"
+          v-model:p1-modifiers="p1Buffs"
+          v-model:p2-modifiers="p2Buffs"
           :player1="player1Object"
           :player2="player2Object"
+        />
+
+        <ImportExportPanel
+          :player1="player1Object"
+          :player2="player2Object"
+          @add-preset="handleNewPreset"
         />
       </div>
 
@@ -62,6 +68,7 @@
           v-model="player2Object"
           title="Player 2"
           :opponent="player1Object"
+          :presets="presets"
         />
       </div>
     </div>
@@ -71,60 +78,49 @@
 <script setup>
 import { ref, computed } from "vue";
 
-const CLASS_DAMAGE_TYPES = {
-  warrior: "melee",
-  ranger: "ranged",
-  sorceress: "magic",
-  berserker: "melee",
-  zerker: "melee",
-  tamer: "melee",
-  musa: "melee",
-  maehwa: "melee",
-  valkyrie: "melee",
-  valk: "melee",
-  kunoichi: "melee",
-  kuno: "melee",
-  ninja: "melee",
-  wizard: "magic",
-  wiz: "magic",
-  witch: "magic",
-  darkknight: "magic",
-  dk: "magic",
-  striker: "melee",
-  mystic: "melee",
-  lahn: "melee",
-  archer: "ranged",
-  shai: "melee",
-  guardian: "melee",
-  hashashin: "magic",
-  hash: "magic",
-  nova: "melee",
-  sage: "magic",
-  corsair: "melee",
-  drakania: "melee",
-  drak: "melee",
-  woosa: "magic",
-  maegu: "magic",
-  scholar: "melee",
-  "do-sa": "melee",
-  dosa: "melee",
-};
+const { data: presets } = await useFetch("/api/v1/presets");
 
-function getDamageType(className) {
-  const name = (className || "").toLowerCase().trim();
-  for (const [cls, type] of Object.entries(CLASS_DAMAGE_TYPES)) {
-    if (name.includes(cls)) return type;
-  }
-  return "melee";
-}
-
-function getRelevantDr(player, attackerDamageType) {
-  if (attackerDamageType === "magic") return Number(player.madr) || 0;
-  if (attackerDamageType === "ranged") return Number(player.radr) || 0;
-  return Number(player.mldr) || 0;
-}
+// const CLASS_DAMAGE_TYPES = {
+//   warrior: "melee",
+//   ranger: "ranged",
+//   sorceress: "magic",
+//   berserker: "melee",
+//   zerker: "melee",
+//   tamer: "melee",
+//   musa: "melee",
+//   maehwa: "melee",
+//   valkyrie: "melee",
+//   valk: "melee",
+//   kunoichi: "melee",
+//   kuno: "melee",
+//   ninja: "melee",
+//   wizard: "magic",
+//   wiz: "magic",
+//   witch: "magic",
+//   darkknight: "magic",
+//   dk: "magic",
+//   striker: "melee",
+//   mystic: "melee",
+//   lahn: "melee",
+//   archer: "ranged",
+//   shai: "melee",
+//   guardian: "melee",
+//   hashashin: "magic",
+//   hash: "magic",
+//   nova: "melee",
+//   sage: "magic",
+//   corsair: "melee",
+//   drakania: "melee",
+//   drak: "melee",
+//   woosa: "magic",
+//   maegu: "magic",
+//   scholar: "melee",
+//   "do-sa": "melee",
+//   dosa: "melee",
+// };
 
 const player1Object = ref({
+  name: "",
   class_name: "Hashashin",
   spec: "Awakening",
 
@@ -155,9 +151,11 @@ const player1Object = ref({
   abad: 0,
   adad: 0,
   aaad: 0,
+  combo: [],
 });
 
 const player2Object = ref({
+  name: "",
   class_name: "Warrior",
   spec: "Awakening",
 
@@ -188,92 +186,194 @@ const player2Object = ref({
   abad: 0,
   adad: 0,
   aaad: 0,
+  combo: [],
 });
 
-const activeP1Skills = ref([]);
-const activeP2Skills = ref([]);
-const activeGeneralBuffs = ref([]);
+const p1Buffs = ref({});
+const p2Buffs = ref({});
 
-const GENERAL_BUFF_VALUES = {
-  cron: { ap: 30, dr: 15 },
-  church: { ap: 8, dr: 8 },
-  villa: { ap: 10, dr: 10 },
-  draught: { ap: 35, dr: -15 },
-};
+const effectivePlayer1 = computed(() => {
+  const p = player1Object.value;
+  const b = p1Buffs.value || {};
 
-const SKILL_BUFF_STATS = {
-  5619: { ap: 20, dr: 0 }, // Aal's Grace
-  5649: { ap: 20, dr: 0 }, // Crown Kick
-  5617: { ap: 0, dr: 0 }, // Flow: Sand Warp
-  1764: { ap: 45, dr: 0 }, // Executioner
-  1744: { ap: 32, dr: 20 }, // Greatsword Defense
-  995: { ap: 0, dr: 20 }, // War Cry III
-};
-
-const p1BuffsTotal = computed(() => {
-  let ap = 0;
-  let dr = 0;
-  for (const bId of activeGeneralBuffs.value) {
-    if (GENERAL_BUFF_VALUES[bId]) {
-      ap += GENERAL_BUFF_VALUES[bId].ap;
-      dr += GENERAL_BUFF_VALUES[bId].dr;
-    }
-  }
-  for (const sId of activeP1Skills.value) {
-    if (SKILL_BUFF_STATS[sId]) {
-      ap += SKILL_BUFF_STATS[sId].ap;
-      dr += SKILL_BUFF_STATS[sId].dr;
-    }
-  }
-  return { ap, dr };
+  return {
+    ...p,
+    hp: (Number(p.hp) || 0) + (b.max_hp || 0),
+    ap: (Number(p.ap) || 0) + (b.all_ap || 0),
+    aap: (Number(p.aap) || 0) + (b.all_ap || 0),
+    adventureap: (Number(p.adventureap) || 0) + (b.all_ap || 0),
+    adventureaap: (Number(p.adventureaap) || 0) + (b.all_ap || 0),
+    acc: (Number(p.acc) || 0) + (b.acc || 0),
+    mldr: Math.max(0, (Number(p.mldr) || 0) + (b.mldr || 0)),
+    radr: Math.max(0, (Number(p.radr) || 0) + (b.radr || 0)),
+    madr: Math.max(0, (Number(p.madr) || 0) + (b.madr || 0)),
+    meev: Math.max(0, (Number(p.meev) || 0) + (b.meev || 0)),
+    raev: Math.max(0, (Number(p.raev) || 0) + (b.raev || 0)),
+    maev: Math.max(0, (Number(p.maev) || 0) + (b.maev || 0)),
+    chc: (Number(p.chc) || 0) + (b.chc || 0),
+    chrp: (Number(p.chrp) || 0) + (b.crit_damage || 0),
+    abad: (Number(p.abad) || 0) + (b.abad || 0),
+    adad: (Number(p.adad) || 0) + (b.adad || 0),
+    aaad: (Number(p.aaad) || 0) + (b.aaad || 0),
+  };
 });
 
-const p2BuffsTotal = computed(() => {
-  let ap = 0;
-  let dr = 0;
-  for (const bId of activeGeneralBuffs.value) {
-    if (GENERAL_BUFF_VALUES[bId]) {
-      ap += GENERAL_BUFF_VALUES[bId].ap;
-      dr += GENERAL_BUFF_VALUES[bId].dr;
-    }
-  }
-  for (const sId of activeP2Skills.value) {
-    if (SKILL_BUFF_STATS[sId]) {
-      ap += SKILL_BUFF_STATS[sId].ap;
-      dr += SKILL_BUFF_STATS[sId].dr;
-    }
-  }
-  return { ap, dr };
+const effectivePlayer2 = computed(() => {
+  const p = player2Object.value;
+  const b = p2Buffs.value || {};
+
+  return {
+    ...p,
+    hp: (Number(p.hp) || 0) + (b.max_hp || 0),
+    ap: (Number(p.ap) || 0) + (b.all_ap || 0),
+    aap: (Number(p.aap) || 0) + (b.all_ap || 0),
+    adventureap: (Number(p.adventureap) || 0) + (b.all_ap || 0),
+    adventureaap: (Number(p.adventureaap) || 0) + (b.all_ap || 0),
+    acc: (Number(p.acc) || 0) + (b.acc || 0),
+    mldr: Math.max(0, (Number(p.mldr) || 0) + (b.mldr || 0)),
+    radr: Math.max(0, (Number(p.radr) || 0) + (b.radr || 0)),
+    madr: Math.max(0, (Number(p.madr) || 0) + (b.madr || 0)),
+    meev: Math.max(0, (Number(p.meev) || 0) + (b.meev || 0)),
+    raev: Math.max(0, (Number(p.raev) || 0) + (b.raev || 0)),
+    maev: Math.max(0, (Number(p.maev) || 0) + (b.maev || 0)),
+    chc: (Number(p.chc) || 0) + (b.chc || 0),
+    chrp: (Number(p.chrp) || 0) + (b.crit_damage || 0),
+    abad: (Number(p.abad) || 0) + (b.abad || 0),
+    adad: (Number(p.adad) || 0) + (b.adad || 0),
+    aaad: (Number(p.aaad) || 0) + (b.aaad || 0),
+  };
 });
 
-const simulatedDamageP1toP2 = computed(() => {
-  const ap =
-    (Number(player1Object.value.adventureap) || 0) + p1BuffsTotal.value.ap;
-  const p1DmgType = getDamageType(player1Object.value.class_name);
-  const dr =
-    getRelevantDr(player2Object.value, p1DmgType) + p2BuffsTotal.value.dr;
-  const raw = Math.max(0, (ap - dr * 0.75) * 4);
-  return Math.round(raw);
+updatePlayer(player1Object.value, presets.value[0]);
+updatePlayer(player2Object.value, presets.value[0]);
+
+const calculateDamageP1toP2 = computed(() => {
+  if (
+    !effectivePlayer1.value.combo ||
+    effectivePlayer1.value.combo.length === 0
+  ) {
+    return 0;
+  }
+  return calculateComboDamage(
+    effectivePlayer1.value,
+    effectivePlayer2.value,
+    effectivePlayer1.value.combo,
+  );
 });
 
 const p1DamagePercent = computed(() => {
-  const hp = Number(player2Object.value.hp) || 1;
-  return Math.min(100, Math.round((simulatedDamageP1toP2.value / hp) * 100));
+  const hp = Number(effectivePlayer2.value.hp) || 1;
+  return Math.min(100, Math.round((calculateDamageP1toP2.value / hp) * 100));
 });
 
-const simulatedDamageP2toP1 = computed(() => {
-  const ap =
-    (Number(player2Object.value.adventureap) || 0) + p2BuffsTotal.value.ap;
-  const p2DmgType = getDamageType(player2Object.value.class_name);
-  const dr =
-    getRelevantDr(player1Object.value, p2DmgType) + p1BuffsTotal.value.dr;
-  const raw = Math.max(0, (ap - dr * 0.75) * 4);
-  return Math.round(raw);
+const calculateDamageP2toP1 = computed(() => {
+  if (
+    !effectivePlayer2.value.combo ||
+    effectivePlayer2.value.combo.length === 0
+  ) {
+    return 0;
+  }
+  return calculateComboDamage(
+    effectivePlayer2.value,
+    effectivePlayer1.value,
+    effectivePlayer2.value.combo,
+  );
 });
 
 const p2DamagePercent = computed(() => {
-  const hp = Number(player1Object.value.hp) || 1;
-  return Math.min(100, Math.round((simulatedDamageP2toP1.value / hp) * 100));
+  const hp = Number(effectivePlayer1.value.hp) || 1;
+  return Math.min(100, Math.round((calculateDamageP2toP1.value / hp) * 100));
+});
+
+function updatePlayer(player, preset) {
+  if (!player || !preset) return;
+
+  const presetKeys = Object.keys(preset);
+
+  for (const key of presetKeys) {
+    if (key in player) {
+      player[key] = preset[key];
+    }
+  }
+}
+function saveToLocal() {
+  localStorage.setItem(
+    "downattack:calculator-draf",
+    JSON.stringify({
+      player1Object: player1Object.value,
+      player2Object: player2Object.value,
+    }),
+  );
+}
+
+function saveCustomPresetToLocal(preset) {
+  try {
+    const raw = localStorage.getItem("downattack:custom-presets");
+    const customList = raw ? JSON.parse(raw) : [];
+    customList.push(preset);
+    localStorage.setItem(
+      "downattack:custom-presets",
+      JSON.stringify(customList),
+    );
+  } catch (error) {
+    console.error("Failed to save custom preset to localStorage:", error);
+  }
+}
+
+function loadLocal() {
+  const calculatorDraf = localStorage.getItem("downattack:calculator-draf");
+  if (calculatorDraf) {
+    try {
+      const parsedData = JSON.parse(calculatorDraf);
+      if (parsedData.player1Object)
+        player1Object.value = parsedData.player1Object;
+      if (parsedData.player2Object)
+        player2Object.value = parsedData.player2Object;
+    } catch (error) {
+      console.error("Failed to load draft from localStorage:", error);
+    }
+  }
+
+  try {
+    const rawCustom = localStorage.getItem("downattack:custom-presets");
+    if (rawCustom) {
+      const storedPresets = JSON.parse(rawCustom);
+      if (Array.isArray(storedPresets) && storedPresets.length > 0) {
+        // Evita duplicar se já existir por ID
+        const existingIds = new Set((presets.value || []).map((p) => p.id));
+        const newOnes = storedPresets.filter((p) => !existingIds.has(p.id));
+
+        presets.value = [...(presets.value || []), ...newOnes];
+      }
+    }
+  } catch (error) {
+    console.error("Failed to load custom presets from localStorage:", error);
+  }
+}
+
+function handleNewPreset(newBuild) {
+  if (!newBuild) return;
+
+  const presetToAdd = {
+    ...newBuild,
+    id: newBuild.id || crypto.randomUUID(),
+  };
+
+  presets.value = [...(presets.value || []), presetToAdd];
+
+  saveCustomPresetToLocal(presetToAdd);
+}
+
+onMounted(() => {
+  loadLocal();
+
+  window.addEventListener("beforeunload", saveToLocal);
+});
+
+onUnmounted(() => {
+  window.removeEventListener("beforeunload", saveToLocal);
+
+  saveToLocal();
 });
 
 useHead({

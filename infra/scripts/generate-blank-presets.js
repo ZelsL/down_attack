@@ -175,7 +175,7 @@ for (let i = 0; i < flatCharactersList.length; i += CHUNK_SIZE) {
     const preset = {
       id: uuidv5(`${className}-${spec}-blank-preset`, NAMESPACE),
       user_id: null,
-      name: `${className} ${spec} - Blank Preset`,
+      name: `Blank Preset`,
       class_name: className,
       spec: spec,
       is_public: true,
