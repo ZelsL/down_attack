@@ -85,7 +85,9 @@ async function runSeed() {
         is_bound,
         is_grapple,
         is_freezing,
-        self_buffs
+        self_buffs,
+        target_debuffs,
+        tags
       )
       SELECT
         (item->>'id')::integer,
@@ -112,7 +114,9 @@ async function runSeed() {
         COALESCE((item->>'is_bound')::boolean, false),
         COALESCE((item->>'is_grapple')::boolean, false),
         COALESCE((item->>'is_freezing')::boolean, false),
-        COALESCE((item->'self_buffs')::jsonb, '[]'::jsonb)
+        COALESCE((item->'self_buffs')::jsonb, '[]'::jsonb),
+        COALESCE((item->'target_debuffs')::jsonb, '{}'::jsonb),
+        COALESCE((item->'tags')::jsonb, '[]'::jsonb)
       FROM jsonb_array_elements($1::jsonb) AS item
       ON CONFLICT (id) DO UPDATE SET
         name = EXCLUDED.name,
@@ -139,6 +143,8 @@ async function runSeed() {
         is_grapple = EXCLUDED.is_grapple,
         is_freezing = EXCLUDED.is_freezing,
         self_buffs = EXCLUDED.self_buffs,
+        target_debuffs = EXCLUDED.target_debuffs,
+        tags = EXCLUDED.tags,
         updated_at = timezone('utc', now());
     `,
       [JSON.stringify(skillsData)],

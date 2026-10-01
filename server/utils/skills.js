@@ -46,6 +46,8 @@ async function create(skillObject) {
       is_grapple: skillObject.is_grapple || false,
       is_freezing: skillObject.is_freezing || false,
       self_buffs: JSON.stringify(skillObject.self_buffs || []),
+      target_debuffs: JSON.stringify(skillObject.target_debuffs || {}),
+      tags: JSON.stringify(skillObject.tags || []),
     };
 
     const columns = Object.keys(skillData);
@@ -186,6 +188,8 @@ async function update(skillId, updateData) {
     "is_grapple",
     "is_freezing",
     "self_buffs",
+    "target_debuffs",
+    "tags",
   ];
 
   const updateEntries = Object.entries(updateData).filter(([key]) =>
@@ -199,7 +203,8 @@ async function update(skillId, updateData) {
     const values = [
       parsedId,
       ...updateEntries.map(([key, value]) =>
-        key === "self_buffs" && typeof value === "object"
+        ["self_buffs", "target_debuffs", "tags"].includes(key) &&
+        typeof value === "object"
           ? JSON.stringify(value)
           : value,
       ),
@@ -246,7 +251,7 @@ async function findOneById(skillId) {
         ) AS hits
       FROM
         skills
-      LEFT JOIN 
+      LEFT JOIN
         skills_hits ON skills.id = skills_hits.skill_id
       WHERE
         skills.id = $1
@@ -315,7 +320,7 @@ async function findAllByClassName(className) {
         ) AS hits
       FROM
         skills
-      LEFT JOIN 
+      LEFT JOIN
         skills_hits ON skills.id = skills_hits.skill_id
       WHERE
         LOWER(class_name) = LOWER($1)
@@ -385,7 +390,7 @@ async function findAllBySpec(className, spec) {
         ) AS hits
       FROM
         skills
-      LEFT JOIN 
+      LEFT JOIN
         skills_hits ON skills.id = skills_hits.skill_id
       WHERE
         LOWER(class_name) = LOWER($1)
@@ -491,6 +496,24 @@ function validateUpdateSkillData(data) {
           action: `Provide true or false for "${col}"`,
         });
       }
+    }
+  }
+  if ("target_debuffs" in data) {
+    const value = data.target_debuffs;
+    if (value !== null && (typeof value !== "object" || Array.isArray(value))) {
+      throw new ValidationError({
+        message: 'Field "target_debuffs" must be a valid object.',
+        action: 'Provide a valid object for "target_debuffs".',
+      });
+    }
+  }
+  if ("tags" in data) {
+    const value = data.tags;
+    if (!Array.isArray(value)) {
+      throw new ValidationError({
+        message: 'Field "tags" must be an array of strings.',
+        action: 'Provide a valid array of strings for "tags".',
+      });
     }
   }
 }
