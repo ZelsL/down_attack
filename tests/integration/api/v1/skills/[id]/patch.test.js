@@ -36,6 +36,8 @@ describe("PATCH /api/v1/skills/[id]", () => {
           body: JSON.stringify({
             cooldown: 5,
             pvp_damage: 75.5,
+            target_debuffs: { all_dr: -15 },
+            tags: ["e_buff"],
           }),
         },
       );
@@ -50,6 +52,8 @@ describe("PATCH /api/v1/skills/[id]", () => {
       expect(responseBody.skill_spec).toBe("Awakening");
       expect(responseBody.cooldown).toBe(5);
       expect(responseBody.pvp_damage).toBe(75.5);
+      expect(responseBody.target_debuffs).toEqual({ all_dr: -15 });
+      expect(responseBody.tags).toEqual(["e_buff"]);
       expect(Date.parse(responseBody.updated_at)).not.toBeNaN();
     });
 
