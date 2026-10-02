@@ -39,6 +39,11 @@ describe("POST /api/v1/skills", () => {
         is_bound: false,
         is_grapple: false,
         is_freezing: false,
+        target_debuffs: {
+          all_dr: -20,
+          evasion: -9,
+        },
+        tags: ["e_buff", "party_buff"],
         hits: [
           {
             description: "Slash damage",
@@ -84,6 +89,13 @@ describe("POST /api/v1/skills", () => {
       expect(typeof responseBody.cooldown).toBe("number");
       expect(responseBody.cooldown).toBe(6);
       expect(responseBody.pvp_damage).toBe(62.5);
+
+      // Debuffs and Tags
+      expect(responseBody.target_debuffs).toEqual({
+        all_dr: -20,
+        evasion: -9,
+      });
+      expect(responseBody.tags).toEqual(["e_buff", "party_buff"]);
 
       // HITS
       expect(Array.isArray(responseBody.hits)).toBe(true);
