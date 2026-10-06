@@ -120,7 +120,7 @@ describe("DELETE /api/v1/presets/[id]", () => {
       expect(responseBody).toEqual({
         action: "Verify if you typed id correctly",
         message:
-          'Preset with id "00000000-0000-0000-0000-000000000000" not found',
+          'Preset with id "00000000-0000-0000-0000-000000000000" not found.',
         name: "NotFoundError",
         status_code: 404,
       });
@@ -139,15 +139,15 @@ describe("DELETE /api/v1/presets/[id]", () => {
         },
       );
 
-      expect(response.status).toBe(404);
+      expect(response.status).toBe(400);
 
       const responseBody = await response.json();
 
       expect(responseBody).toEqual({
-        action: "Verify if you typed id correctly",
-        message: 'Preset with id "12345670" not found',
-        name: "NotFoundError",
-        status_code: 404,
+        action: "Please provide a valid UUID for Preset ID.",
+        message: "Invalid Preset ID: '12345670'.",
+        name: "ValidationError",
+        status_code: 400,
       });
     });
   });

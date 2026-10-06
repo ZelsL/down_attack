@@ -22,7 +22,7 @@ describe("GET /api/v1/presets/[id]", () => {
       expect(responseBody).toEqual({
         name: "NotFoundError",
         status_code: 404,
-        message: 'Preset with id "999999999" not found',
+        message: 'Preset with id "999999999" not found.',
         action: "Verify if you typed id correctly",
       });
     });
@@ -40,7 +40,7 @@ describe("GET /api/v1/presets/[id]", () => {
       expect(responseBody).toEqual({
         name: "NotFoundError",
         status_code: 404,
-        message: `Preset with id "${nonexistentId}" not found`,
+        message: `Preset with id "${nonexistentId}" not found.`,
         action: "Verify if you typed id correctly",
       });
     });
@@ -104,7 +104,7 @@ describe("GET /api/v1/presets/[id]", () => {
       expect(responseBody).toEqual({
         name: "NotFoundError",
         status_code: 404,
-        message: `Preset with id "${privatePreset.id}" not found`,
+        message: `Preset with id "${privatePreset.id}" not found.`,
         action: "Verify if you typed id correctly",
       });
     });
@@ -183,7 +183,7 @@ describe("GET /api/v1/presets/[id]", () => {
       expect(responseBody).toEqual({
         name: "NotFoundError",
         status_code: 404,
-        message: `Preset with id "${privatePresetOfA.id}" not found`,
+        message: `Preset with id "${privatePresetOfA.id}" not found.`,
         action: "Verify if you typed id correctly",
       });
     });
@@ -243,7 +243,7 @@ describe("GET /api/v1/presets/[id]", () => {
       expect(responseBody).toEqual({
         name: "NotFoundError",
         status_code: 404,
-        message: `Preset with id "${nonexistentId}" not found`,
+        message: `Preset with id "${nonexistentId}" not found.`,
         action: "Verify if you typed id correctly",
       });
     });
