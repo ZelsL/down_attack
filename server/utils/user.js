@@ -98,6 +98,10 @@ async function create(userInputValues) {
     "create:preset",
     "update:preset",
     "delete:preset",
+    "create:combo",
+    "read:combo",
+    "update:combo",
+    "delete:combo",
   ]);
 
   async function runUpsertQuery(userInputValues) {

@@ -6,6 +6,7 @@ import user from "~/server/utils/user.js";
 import skills from "~/server/utils/skills.js";
 import session from "~/server/utils/session.js";
 import preset from "~/server/utils/preset.js";
+import combo from "~/server/utils/combo.js";
 import webserver from "~/infra/webserver.js";
 
 async function waitForAllServices() {
@@ -84,7 +85,10 @@ async function createSkill(skillObject) {
     ],
   };
 
-  return await skills.create(skillObject ? skillObject : defaultSkillObject);
+  return await skills.create({
+    ...defaultSkillObject,
+    ...skillObject,
+  });
 }
 
 async function createPreset(presetObject, user) {
@@ -103,6 +107,31 @@ async function createPreset(presetObject, user) {
   );
 }
 
+async function createCombo(comboObject, user) {
+  await createSkill(comboObject?.class_name);
+
+  const defaultCombo = {
+    name: "Valid Combo",
+    class_name: "Hashashin",
+    spec: "Awakening",
+    skills: [
+      {
+        id: 5608,
+        name: `Aal's Dominion IV`,
+        hits: [],
+      },
+    ],
+  };
+
+  return await combo.create(
+    {
+      ...defaultCombo,
+      ...comboObject,
+    },
+    user,
+  );
+}
+
 const orchestrator = {
   waitForAllServices,
   clearDatabase,
@@ -112,6 +141,7 @@ const orchestrator = {
   addFeaturesToUser,
   createSkill,
   createPreset,
+  createCombo,
 };
 
 export default orchestrator;

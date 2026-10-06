@@ -5,43 +5,10 @@ import {
   ForbiddenError,
 } from "~~/infra/errors.js";
 import database from "~~/infra/database.js";
-import { validate as uuidValidate } from "uuid";
+import validator from "./validator.js";
+import authorization from "./authorization.js";
 
 const VALID_SCOPES = ["default", "community", "mine", "official", "site"];
-
-const VALID_CLASSES = [
-  "warrior",
-  "ranger",
-  "sorceress",
-  "berserker",
-  "tamer",
-  "musa",
-  "maehwa",
-  "valkyrie",
-  "kunoichi",
-  "ninja",
-  "wizard",
-  "witch",
-  "darkknight",
-  "striker",
-  "mystic",
-  "lahn",
-  "archer",
-  "shai",
-  "guardian",
-  "hashashin",
-  "nova",
-  "sage",
-  "corsair",
-  "drakania",
-  "woosa",
-  "maegu",
-  "scholar",
-  "dosa",
-  "deadeye",
-];
-
-const VALID_SPECS = ["awakening", "succession", "ascension"];
 
 const NUMERIC_COLUMNS = [
   "hp",
@@ -131,7 +98,7 @@ async function create(presetObject, user) {
         presets (
           ${columns.join(", ")}
         ) VALUES (
-          ${placeholders} 
+          ${placeholders}
         )
       RETURNING *
       ;`,
@@ -151,14 +118,7 @@ function validatePreset(presetObject) {
     });
   }
 
-  const normalizedClass = presetObject.class_name.toLowerCase().trim();
-
-  if (!VALID_CLASSES.includes(normalizedClass)) {
-    throw new ValidationError({
-      message: `Invalid class_name: '${presetObject.class_name}'`,
-      action: "Please provide a valid BDO class name (e.g Hashashin, Warrior).",
-    });
-  }
+  validator.validateClass(presetObject.class_name);
 
   validatePresetData(presetObject);
 }
@@ -176,17 +136,8 @@ function validatePresetData(presetObject) {
     });
   }
   // Spec Validation
-  if (presetObject.spec) {
-    if (
-      typeof presetObject.spec !== "string" ||
-      !VALID_SPECS.includes(presetObject.spec.toLowerCase().trim())
-    ) {
-      throw new ValidationError({
-        message: `Invalid spec: '${presetObject.spec}'.`,
-        action: "Valid option are: 'Awakening', 'Succession' or 'Ascension'.",
-      });
-    }
-  }
+
+  if (presetObject.spec) validator.validateSpec(presetObject.spec);
 
   // Name Validation
   if (presetObject.name !== undefined) {
@@ -249,14 +200,7 @@ function validatePresetData(presetObject) {
           "Please provide a valid BDO class name (e.g. Hashashin, Warrior).",
       });
     }
-    const normalizedClass = className.toLowerCase().trim();
-    if (!VALID_CLASSES.includes(normalizedClass)) {
-      throw new ValidationError({
-        message: `Invalid class_name: '${className}'.`,
-        action:
-          "Please provide a valid BDO class name (e.g. Hashashin, Warrior).",
-      });
-    }
+    validator.validateClass(className);
   }
 }
 
@@ -389,17 +333,13 @@ async function findAll({ className, spec, scope, user } = {}) {
   }
 }
 
-function validateUUID(id) {
-  if (!uuidValidate(id)) {
+async function findOneById(id, user) {
+  if (!validator.isUUID(id)) {
     throw new NotFoundError({
-      message: `Preset with id "${id}" not found`,
+      message: `Preset with id "${id}" not found.`,
       action: "Verify if you typed id correctly",
     });
   }
-}
-
-async function findOneById(id, user) {
-  validateUUID(id);
 
   const presetFound = await runSelectQuery(id, user);
 
@@ -426,7 +366,7 @@ async function findOneById(id, user) {
           json_agg(combos.*) FILTER (WHERE combos.id IS NOT NULL),
           '[]'
         ) AS combos
-      FROM 
+      FROM
         presets
       LEFT JOIN
         combos ON presets.id = combos.preset_id
@@ -440,7 +380,7 @@ async function findOneById(id, user) {
 
     if (results.rowCount === 0) {
       throw new NotFoundError({
-        message: `Preset with id "${id}" not found`,
+        message: `Preset with id "${id}" not found.`,
         action: "Verify if you typed id correctly",
       });
     }
@@ -450,7 +390,7 @@ async function findOneById(id, user) {
 }
 
 async function update(id, presetObject, user) {
-  validateUUID(id);
+  validator.validateUUID(id);
   validatePresetData(presetObject);
 
   const updatedPreset = await runUpdateQuery(id, presetObject, user);
@@ -507,7 +447,7 @@ async function update(id, presetObject, user) {
 
     if (results.rowCount === 0) {
       throw new NotFoundError({
-        message: `Preset with id ${id} not found`,
+        message: `Preset with id "${id}" not found.`,
         action: "Verify if you typed id correctly",
       });
     }
@@ -517,7 +457,7 @@ async function update(id, presetObject, user) {
 }
 
 async function deleteOne(id, user) {
-  validateUUID(id);
+  validator.validateUUID(id, `Preset ID`);
   const presetToDelete = await findOneById(id);
 
   await runDeleteQuery(presetToDelete, user);

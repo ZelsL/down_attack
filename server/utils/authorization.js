@@ -36,6 +36,16 @@ const availableFeatures = [
   "update:preset:others",
   "delete:preset",
   "delete:preset:others",
+
+  // COMBOS
+
+  "create:combo",
+  "read:combo",
+  "read:combo:others",
+  "update:combo",
+  "update:combo:others",
+  "delete:combo",
+  "delete:combo:others",
 ];
 
 function can(user, feature, resource) {
@@ -68,6 +78,22 @@ function can(user, feature, resource) {
     authorized = false;
 
     if (user.id === resource.user_id || can(user, "delete:preset:others")) {
+      authorized = true;
+    }
+  }
+
+  if (feature === "update:combo" && resource) {
+    authorized = false;
+
+    if (user.id === resource.user_id || can(user, "update:combo:others")) {
+      authorized = true;
+    }
+  }
+
+  if (feature === "delete:combo" && resource) {
+    authorized = false;
+
+    if (user.id === resource.user_id || can(user, "delete:combo:others")) {
       authorized = true;
     }
   }
