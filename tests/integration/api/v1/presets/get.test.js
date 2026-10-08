@@ -146,6 +146,30 @@ describe("GET /api/v1/presets", () => {
         expect(p.is_public).toBe(true);
       }
     });
+    test("With tier=aos (returns only aos presets)", async () => {
+      const createdUser = await orchestrator.createUser();
+
+      const createdPreset = await orchestrator.createPreset(
+        {
+          tier: "AOS",
+        },
+        createdUser,
+      );
+
+      const response = await fetch(
+        `${webserver.origin}/api/v1/presets?tier=AOS&scope=community`,
+      );
+
+      expect(response.status).toBe(200);
+
+      const responseBody = await response.json();
+
+      expect(responseBody).toEqual([
+        {
+          ...createdPreset,
+        },
+      ]);
+    });
 
     test("With scope=mine when anonymous (returns 401 UnauthorizedError)", async () => {
       const response = await fetch(
@@ -279,6 +303,18 @@ describe("GET /api/v1/presets", () => {
     test("With invalid spec parameter", async () => {
       const response = await fetch(
         `${webserver.origin}/api/v1/presets?class_name=Hashashin&spec=InvalidSpec`,
+      );
+
+      expect(response.status).toBe(400);
+
+      const responseBody = await response.json();
+
+      expect(responseBody.name).toBe("ValidationError");
+      expect(responseBody.status_code).toBe(400);
+    });
+    test("With invalid tier parameter", async () => {
+      const response = await fetch(
+        `${webserver.origin}/api/v1/presets?class_name=Hashashin&tier=Invalid-Tier`,
       );
 
       expect(response.status).toBe(400);

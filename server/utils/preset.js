@@ -8,7 +8,8 @@ import database from "~~/infra/database.js";
 import validator from "./validator.js";
 import authorization from "./authorization.js";
 
-const VALID_SCOPES = ["default", "community", "mine", "official", "site"];
+const VALID_SCOPES = ["community", "mine", "official"];
+const VALID_TIERS = ["AG", "T1", "T2", "T3", "AOS", "A4", "SEASON"];
 
 const NUMERIC_COLUMNS = [
   "hp",
@@ -55,6 +56,15 @@ async function create(presetObject, user) {
       presetName = `Preset ${count + 1}`;
     }
 
+    if (presetObject.is_official) {
+      if (!authorization.can(user, "update:preset:others")) {
+        throw new ForbiddenError({
+          message: "You do not have permission to run this action.",
+          action: 'Verify if your user has the feature: "update:preset:others"',
+        });
+      }
+    }
+
     const presetData = {
       user_id: user?.id || null,
       name: presetName,
@@ -86,6 +96,8 @@ async function create(presetObject, user) {
 
       is_public:
         presetObject.is_public !== undefined ? presetObject.is_public : true,
+      is_official: presetObject.is_official || false,
+      tier: presetObject.tier || null,
     };
 
     const columns = Object.keys(presetData);
@@ -202,6 +214,35 @@ function validatePresetData(presetObject) {
     }
     validator.validateClass(className);
   }
+
+  // is official validation
+
+  if (
+    presetObject.is_official !== undefined &&
+    typeof presetObject.is_official !== "boolean"
+  ) {
+    throw new ValidationError({
+      message: 'Field "is_official" must be a boolean (true or false).',
+      action: 'Provide true or false for "is_official".',
+    });
+  }
+
+  // tier validation
+
+  validateTier(presetObject.tier);
+
+  if (presetObject.tier !== undefined) {
+    if (
+      typeof presetObject.tier !== "string" ||
+      presetObject.tier.trim().length === 0 ||
+      presetObject.tier.length > 50
+    ) {
+      throw new ValidationError({
+        message: 'Field "tier" must be a string between 1 and 50 characters.',
+        action: "Provide a valid tier for the preset.",
+      });
+    }
+  }
 }
 
 function formatPreset(preset) {
@@ -231,12 +272,13 @@ function formatPreset(preset) {
   };
 }
 
-async function findAll({ className, spec, scope, user } = {}) {
+async function findAll({ className, spec, scope, user, tier } = {}) {
   validatePresetData({
     class_name: className,
     spec: spec,
   });
   validateScope(scope);
+  validateTier(tier);
 
   if (scope?.toLowerCase().trim() === "mine" && !user?.id) {
     throw new UnauthorizedError({
@@ -245,7 +287,7 @@ async function findAll({ className, spec, scope, user } = {}) {
     });
   }
 
-  const presets = await runSelectQuery({ className, spec, scope, user });
+  const presets = await runSelectQuery({ className, spec, scope, user, tier });
 
   return presets;
 
@@ -256,43 +298,54 @@ async function findAll({ className, spec, scope, user } = {}) {
         throw new ValidationError({
           message: `Invalid scope: '${scope}'.`,
           action:
-            "Valid options are: 'community', 'mine', 'official', or omit for default.",
+            "Valid options are: 'community', 'mine', 'official' or omit the scope parameter to view all presets.",
         });
       }
     }
   }
 
-  async function runSelectQuery({ className, spec, scope, user }) {
+  async function runSelectQuery({ className, spec, scope, user, tier }) {
     const conditions = [];
     const values = [];
 
     const normalizedScope = scope ? scope.toLowerCase().trim() : "default";
 
-    if (normalizedScope === "mine") {
-      values.push(user.id);
-      conditions.push(`presets.user_id = $${values.length}`);
-    } else if (normalizedScope === "official" || normalizedScope === "site") {
-      conditions.push(`presets.user_id IS NULL AND presets.is_public = true`);
-    } else if (normalizedScope === "community") {
-      if (user?.id) {
+    const officialCondition = `(presets.is_official = true OR (presets.user_id IS NULL AND presets.is_public = true))`;
+
+    switch (normalizedScope) {
+      case "mine": {
         values.push(user.id);
-        conditions.push(
-          `(presets.user_id IS NOT NULL AND presets.is_public = true AND presets.user_id != $${values.length})`,
-        );
-      } else {
-        conditions.push(
-          `(presets.user_id IS NOT NULL AND presets.is_public = true)`,
-        );
+        conditions.push(`presets.user_id = $${values.length}`);
+        break;
       }
-    } else {
-      // default: official presets of the site + user's own presets
-      if (user?.id) {
-        values.push(user.id);
-        conditions.push(
-          `((presets.user_id IS NULL AND presets.is_public = true) OR presets.user_id = $${values.length})`,
-        );
-      } else {
-        conditions.push(`presets.user_id IS NULL AND presets.is_public = true`);
+      case "official": {
+        conditions.push(officialCondition);
+        break;
+      }
+      case "community": {
+        if (user?.id) {
+          values.push(user.id);
+          conditions.push(
+            `(presets.user_id IS NOT NULL AND presets.is_public = true AND presets.is_official = false AND presets.user_id !=
+$${values.length})`,
+          );
+        } else {
+          conditions.push(
+            `(presets.user_id IS NOT NULL AND presets.is_public = true AND presets.is_official = false)`,
+          );
+        }
+        break;
+      }
+      case "default": {
+        if (user?.id) {
+          values.push(user.id);
+          conditions.push(
+            `(${officialCondition} OR presets.user_id = $${values.length})`,
+          );
+        } else {
+          conditions.push(officialCondition);
+        }
+        break;
       }
     }
 
@@ -306,6 +359,13 @@ async function findAll({ className, spec, scope, user } = {}) {
     if (spec) {
       values.push(spec.toLowerCase().trim());
       conditions.push(`LOWER(presets.spec) = $${values.length}`);
+    }
+
+    // Tier Filter (optional)
+
+    if (tier) {
+      values.push(tier.toUpperCase().trim());
+      conditions.push(`UPPER(presets.tier) = $${values.length}`);
     }
 
     const whereClause = `WHERE ${conditions.join(" AND ")}`;
@@ -407,12 +467,25 @@ async function update(id, presetObject, user) {
       });
     }
 
+    if (
+      presetObject.is_official !== undefined &&
+      !authorization.can(user, "update:preset:others")
+    ) {
+      throw new ForbiddenError({
+        message:
+          "You do not have permission to change official status of a preset.",
+        action: 'Verify if your user has the feature: "update:preset:others"',
+      });
+    }
+
     const allowedColumns = [
       ...NUMERIC_COLUMNS,
       "name",
       "class_name",
       "spec",
       "is_public",
+      "is_official",
+      "tier",
     ];
     const allowedKeys = Object.keys(presetObject).filter((key) => {
       return allowedColumns.includes(key);
@@ -484,6 +557,18 @@ async function deleteOne(id, user) {
     });
 
     return results.rows[0];
+  }
+}
+
+function validateTier(tier) {
+  if (tier) {
+    const normalizedScope = tier.toUpperCase().trim();
+    if (!VALID_TIERS.includes(normalizedScope)) {
+      throw new ValidationError({
+        message: `Invalid tier: '${tier}'.`,
+        action: `Valid options are: ${VALID_TIERS.join(", ")} or omit the tier parameter.`,
+      });
+    }
   }
 }
 

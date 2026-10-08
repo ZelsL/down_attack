@@ -134,6 +134,78 @@ describe("POST /api/v1/presets", () => {
       expect(responseBody.aaad).toBe(5);
       expect(responseBody.is_public).toBe(false);
     });
+    test("With complete valid preset and custom tier", async () => {
+      const createdUser = await orchestrator.createUser();
+      const sessionObject = await orchestrator.createSession(createdUser);
+
+      const presetData = {
+        name: "Zels Endgame Build",
+        class_name: "Hashashin",
+        spec: "Succession",
+        hp: 11500,
+        ap: 320.5,
+        aap: 322,
+        adventureap: 1055.8,
+        adventureaap: 1060.2,
+        mldr: 890,
+        radr: 880,
+        madr: 870,
+        acc: 1080,
+        meev: 790,
+        raev: 780,
+        maev: 770,
+        bdrp: 7.5,
+        chrp: 12,
+        chc: 100,
+        abad: 10,
+        adad: 15,
+        aaad: 5,
+        is_public: false,
+        combos: [],
+        tier: "AOS",
+      };
+
+      const response = await fetch(`${webserver.origin}/api/v1/presets`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Cookie: `session_id=${sessionObject.token}`,
+        },
+        body: JSON.stringify(presetData),
+      });
+
+      expect(response.status).toBe(201);
+
+      const responseBody = await response.json();
+
+      expect(uuidVersion(responseBody.id)).toBe(4);
+      expect(responseBody.user_id).toBe(createdUser.id);
+      expect(responseBody.name).toBe("Zels Endgame Build");
+      expect(responseBody.class_name).toBe("Hashashin");
+      expect(responseBody.spec).toBe("Succession");
+
+      // Verify numeric values parsed correctly
+      expect(responseBody.hp).toBe(11500);
+      expect(responseBody.ap).toBe(320.5);
+      expect(responseBody.aap).toBe(322);
+      expect(responseBody.adventureap).toBe(1055.8);
+      expect(responseBody.adventureaap).toBe(1060.2);
+      expect(responseBody.mldr).toBe(890);
+      expect(responseBody.radr).toBe(880);
+      expect(responseBody.madr).toBe(870);
+      expect(responseBody.acc).toBe(1080);
+      expect(responseBody.meev).toBe(790);
+      expect(responseBody.raev).toBe(780);
+      expect(responseBody.maev).toBe(770);
+      expect(responseBody.bdrp).toBe(7.5);
+      expect(responseBody.chrp).toBe(12);
+      expect(responseBody.chc).toBe(100);
+      expect(responseBody.abad).toBe(10);
+      expect(responseBody.adad).toBe(15);
+      expect(responseBody.aaad).toBe(5);
+      expect(responseBody.is_public).toBe(false);
+      expect(responseBody.tier).toBe("AOS");
+    });
 
     test("Auto-incrementing preset names for multiple presets of same user", async () => {
       const createdUser = await orchestrator.createUser();
@@ -314,6 +386,28 @@ describe("POST /api/v1/presets", () => {
       expect(responseBody.name).toBe("ValidationError");
       expect(responseBody.status_code).toBe(400);
     });
+    test("With invalid tier", async () => {
+      const createdUser = await orchestrator.createUser();
+      const sessionObject = await orchestrator.createSession(createdUser);
+
+      const response = await fetch(`${webserver.origin}/api/v1/presets`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Cookie: `session_id=${sessionObject.token}`,
+        },
+        body: JSON.stringify({
+          class_name: "Hashashin",
+          tier: "Invalid-tier",
+        }),
+      });
+
+      expect(response.status).toBe(400);
+
+      const responseBody = await response.json();
+      expect(responseBody.name).toBe("ValidationError");
+      expect(responseBody.status_code).toBe(400);
+    });
 
     test("With negative number in numeric field (e.g. ap: -10)", async () => {
       const createdUser = await orchestrator.createUser();
@@ -383,8 +477,35 @@ describe("POST /api/v1/presets", () => {
       expect(responseBody.name).toBe("ValidationError");
       expect(responseBody.status_code).toBe(400);
     });
-  });
 
+    test("Trying to create a official preset, should to return 403", async () => {
+      const createdUser = await orchestrator.createUser();
+      const sessionObject = await orchestrator.createSession(createdUser);
+
+      const response = await fetch(`${webserver.origin}/api/v1/presets`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Cookie: `session_id=${sessionObject.token}`,
+        },
+        body: JSON.stringify({
+          class_name: "Hashashin",
+          is_official: true,
+        }),
+      });
+
+      expect(response.status).toBe(403);
+
+      const responseBody = await response.json();
+
+      expect(responseBody).toEqual({
+        name: "ForbiddenError",
+        message: "You do not have permission to run this action.",
+        action: 'Verify if your user has the feature: "update:preset:others"',
+        status_code: 403,
+      });
+    });
+  });
   describe("Anonymous user", () => {
     test("Trying to create a preset without authentication", async () => {
       const response = await fetch(`${webserver.origin}/api/v1/presets`, {
@@ -407,6 +528,67 @@ describe("POST /api/v1/presets", () => {
         action: 'Verify if your user has the feature: "create:preset"',
         status_code: 403,
       });
+    });
+  });
+  describe("Privileged User", () => {
+    test("With 'update:preset:others' creating a official preset should return 201", async () => {
+      const privilegedUser = await orchestrator.createUser();
+      const privilegedUserSession =
+        await orchestrator.createSession(privilegedUser);
+      await orchestrator.addFeaturesToUser(privilegedUser, [
+        "update:preset:others",
+      ]);
+
+      const response = await fetch(`${webserver.origin}/api/v1/presets`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Cookie: `session_id=${privilegedUserSession.token}`,
+        },
+        body: JSON.stringify({
+          class_name: "Hashashin",
+          is_official: true,
+        }),
+      });
+
+      expect(response.status).toBe(201);
+
+      const responseBody = await response.json();
+
+      // Identifiers & Ownership
+      expect(uuidVersion(responseBody.id)).toBe(4);
+      expect(responseBody.user_id).toBe(privilegedUser.id);
+      expect(responseBody.name).toBe("Preset 1");
+      expect(responseBody.class_name).toBe("Hashashin");
+      expect(responseBody.spec).toBe("Awakening");
+
+      // Default Combat Stats
+      expect(responseBody.hp).toBe(10000);
+      expect(responseBody.ap).toBe(0);
+      expect(responseBody.aap).toBe(0);
+      expect(responseBody.adventureap).toBe(0);
+      expect(responseBody.adventureaap).toBe(0);
+      expect(responseBody.mldr).toBe(0);
+      expect(responseBody.radr).toBe(0);
+      expect(responseBody.madr).toBe(0);
+      expect(responseBody.acc).toBe(0);
+      expect(responseBody.meev).toBe(0);
+      expect(responseBody.raev).toBe(0);
+      expect(responseBody.maev).toBe(0);
+      expect(responseBody.bdrp).toBe(0);
+      expect(responseBody.chrp).toBe(0);
+      expect(responseBody.chc).toBe(0);
+      expect(responseBody.abad).toBe(0);
+      expect(responseBody.adad).toBe(0);
+      expect(responseBody.aaad).toBe(0);
+
+      // Metadata
+      expect(responseBody.is_public).toBe(true);
+      expect(responseBody.is_official).toBe(true);
+      expect(Array.isArray(responseBody.combos)).toBe(true);
+      expect(responseBody.combos).toHaveLength(0);
+      expect(Date.parse(responseBody.created_at)).not.toBeNaN();
+      expect(Date.parse(responseBody.updated_at)).not.toBeNaN();
     });
   });
 });

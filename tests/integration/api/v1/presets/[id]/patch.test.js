@@ -30,6 +30,7 @@ describe("PATCH /api/v1/presets/[id]", () => {
             hp: 10000,
             ap: 304,
             aap: 309,
+            tier: "AOS",
           }),
         },
       );
@@ -45,12 +46,47 @@ describe("PATCH /api/v1/presets/[id]", () => {
         hp: 10000,
         ap: 304,
         aap: 309,
+        tier: "AOS",
       });
 
       expect(
         Date.parse(responseBody.updated_at) >
           Date.parse(createdPreset.updated_at),
       ).toBe(true);
+    });
+    test("Trying to make your preset as official", async () => {
+      const createdUser = await orchestrator.createUser();
+      const createdPreset = await orchestrator.createPreset(
+        undefined,
+        createdUser,
+      );
+      const sessionObject = await orchestrator.createSession(createdUser);
+
+      const response = await fetch(
+        `${webserver.origin}/api/v1/presets/${createdPreset.id}`,
+        {
+          method: "PATCH",
+          headers: {
+            "Content-Type": "application/json",
+            Cookie: `session_id=${sessionObject.token}`,
+          },
+          body: JSON.stringify({
+            is_official: true,
+          }),
+        },
+      );
+
+      expect(response.status).toBe(403);
+
+      const responseBody = await response.json();
+
+      expect(responseBody).toEqual({
+        action: 'Verify if your user has the feature: "update:preset:others"',
+        message:
+          "You do not have permission to change official status of a preset.",
+        name: "ForbiddenError",
+        status_code: 403,
+      });
     });
     test("Trying to update another user's preset", async () => {
       const createdUserA = await orchestrator.createUser();
@@ -252,6 +288,50 @@ describe("PATCH /api/v1/presets/[id]", () => {
         hp: 10000,
         ap: 304,
         aap: 309,
+      });
+
+      expect(
+        Date.parse(responseBody.updated_at) >
+          Date.parse(createdPreset.updated_at),
+      ).toBe(true);
+    });
+    test("With 'update:preset:others' set a preset to a official preset", async () => {
+      const privilegedUser = await orchestrator.createUser();
+      await orchestrator.addFeaturesToUser(privilegedUser, [
+        "update:preset:others",
+      ]);
+      const createdUser = await orchestrator.createUser();
+      const createdPreset = await orchestrator.createPreset(
+        undefined,
+        createdUser,
+      );
+      const privilegedUserSession =
+        await orchestrator.createSession(privilegedUser);
+
+      const response = await fetch(
+        `${webserver.origin}/api/v1/presets/${createdPreset.id}`,
+        {
+          method: "PATCH",
+          headers: {
+            "Content-Type": "application/json",
+            Cookie: `session_id=${privilegedUserSession.token}`,
+          },
+          body: JSON.stringify({
+            is_official: true,
+            tier: "AG",
+          }),
+        },
+      );
+
+      expect(response.status).toBe(200);
+
+      const responseBody = await response.json();
+
+      expect(responseBody).toEqual({
+        ...createdPreset,
+        is_official: true,
+        tier: "AG",
+        updated_at: responseBody.updated_at,
       });
 
       expect(
