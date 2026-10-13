@@ -78,6 +78,8 @@
 <script setup>
 import { ref, computed } from "vue";
 
+const route = useRoute();
+
 const { data: presets } = await useFetch("/api/v1/presets");
 
 // const CLASS_DAMAGE_TYPES = {
@@ -244,8 +246,15 @@ const effectivePlayer2 = computed(() => {
   };
 });
 
-updatePlayer(player1Object.value, presets.value[0]);
-updatePlayer(player2Object.value, presets.value[0]);
+const p1Preset = route.query.p1
+  ? presets.value?.find((p) => p.id === route.query.p1)
+  : presets.value?.[0];
+const p2Preset = route.query.p2
+  ? presets.value?.find((p) => p.id === route.query.p2)
+  : presets.value?.[0];
+
+updatePlayer(player1Object.value, p1Preset);
+updatePlayer(player2Object.value, p2Preset);
 
 const calculateDamageP1toP2 = computed(() => {
   if (
