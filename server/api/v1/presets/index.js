@@ -7,12 +7,14 @@ export default controller.handle({
       const className = query.class_name || query.className;
       const spec = query.spec;
       const scope = query.scope;
+      const tier = query.tier;
 
       const presetsFound = await preset.findAll({
         className,
         spec,
         scope,
         user: userTryingToGet,
+        tier,
       });
 
       return presetsFound;
