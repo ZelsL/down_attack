@@ -13,6 +13,55 @@
         <span class="font-semibold text-sm text-[#ffedd4]">
           {{ currentTab.name }}
         </span>
+
+        <div
+          v-if="!authIsLoading"
+          class="w-full bg-[#775d3a] justify-end h-8 flex items-center space-x-2"
+        >
+          <button
+            v-if="!isAuthenticated"
+            type="button"
+            class="flex items-center gap-1.5 focus:outline-none hover:opacity-80 transition-opacity"
+            @click="login"
+          >
+            <span
+              class="w-6 h-6 bg-[#ffedd4] inline-block transition-colors"
+              :style="{
+                mask: `url(/icons/discord_login.png) no-repeat center / contain`,
+                WebkitMask: `url(/icons/discord_login.png) no-repeat center / contain`,
+              }"
+            />
+            <span class="font-semibold text-sm text-[#ffedd4]"> Login </span>
+          </button>
+
+          <div v-else class="relative group flex items-center">
+            <img
+              :src="avatarUrl"
+              alt="User Avatar"
+              class="w-7 h-7 rounded-full cursor-pointer border border-[#ffedd4]/40"
+            />
+
+            <div
+              class="absolute right-0 top-full pt-1 hidden group-hover:block z-50"
+            >
+              <button
+                type="button"
+                class="bg-[#323134] border border-[#ffedd4]/20 text-[#ffedd4] hover:text-[#d7ad70] text-xs font-semibold px-3 py-1.5 rounded shadow-lg whitespace-nowrap"
+                @click="logout"
+              >
+                Logout
+              </button>
+            </div>
+          </div>
+          <a
+            type="button"
+            class="text-[#f5ebd9]/70 hover:text-[#d7ad70] text-sm font-bold w-6 h-6 flex items-center justify-center transition-colors cursor-pointer"
+            title="Close"
+            href="/"
+          >
+            ✕
+          </a>
+        </div>
       </div>
 
       <!-- 2nd Row: Dark Bar with Centered Icons & Reactive Colors -->
@@ -50,7 +99,14 @@
 </template>
 
 <script setup>
-import { computed } from "vue";
+import { computed, onMounted } from "vue";
+
+const { fetchUser, isAuthenticated, avatarUrl, login, logout, authIsLoading } =
+  useAuth();
+
+onMounted(() => {
+  fetchUser();
+});
 
 const route = useRoute();
 const customHeader = useHeader();
@@ -73,7 +129,7 @@ const tabs = [
     id: "discord",
     name: "Discord",
     icon: "/icons/discord.png",
-    path: "https://discord.gg",
+    path: "https://discord.gg/kNYvABEHJ3",
   },
 ];
 
