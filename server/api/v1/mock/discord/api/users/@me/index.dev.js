@@ -27,8 +27,8 @@ export default controller.handle({
 
     async function UserObject(discord_id, username) {
       const fakeUsername = username ? username : faker.internet.username();
-      const fakeUserId = discord_id ? discord_id : faker.string.numeric(18);
-      const fakeAvatar = faker.string.alphanumeric(32);
+      const fakeUserId = discord_id ? discord_id : "268473310986240001";
+      const fakeAvatar = "f749bb0cbeeb26ef21eca719337d20f1";
 
       const fakeUserObject = {
         id: fakeUserId,
