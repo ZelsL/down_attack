@@ -154,6 +154,8 @@ const player1Object = ref({
   adad: 0,
   aaad: 0,
   combo: [],
+  combos: [],
+  availableCombos: [],
 });
 
 const player2Object = ref({
@@ -189,6 +191,8 @@ const player2Object = ref({
   adad: 0,
   aaad: 0,
   combo: [],
+  combos: [],
+  availableCombos: [],
 });
 
 const p1Buffs = ref({});
