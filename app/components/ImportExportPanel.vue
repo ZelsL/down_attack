@@ -159,6 +159,27 @@ async function handleGarmothImport(text) {
   }
 }
 
+function formatSkillsToLines(skills, lines) {
+  skills.forEach((skill, index) => {
+    const command = skill.command ? ` [${skill.command}]` : "";
+    lines.push(`${index + 1}. ${skill.name}${command}`);
+
+    (skill.hits || []).forEach((hit, hitIndex) => {
+      const hitDetails = [];
+      if (hit.normal_hits > 0) hitDetails.push(`${hit.normal_hits} Normal`);
+      if (hit.down_hits > 0) hitDetails.push(`${hit.down_hits} Down`);
+      if (hit.back_hits > 0) hitDetails.push(`${hit.back_hits} Back`);
+      if (hit.air_hits > 0) hitDetails.push(`${hit.air_hits} Air`);
+
+      const summary =
+        hitDetails.length > 0 ? hitDetails.join(", ") : "0 Landed";
+      lines.push(
+        `   • Hit ${hitIndex + 1} (${hit.damage_percent || 0}%): ${summary}`,
+      );
+    });
+  });
+}
+
 function formatPlayerToText(player) {
   if (!player) return "";
 
@@ -168,8 +189,7 @@ function formatPlayerToText(player) {
   lines.push(title);
 
   lines.push(
-    `HP: ${player.hp || 0} / AP: ${player.ap || 0} / AAP: ${player.aap || 0} / Total AP: ${player.adventureap || 0} / Total AAP:
-${player.adventureaap || 0}`,
+    `HP: ${player.hp || 0} / AP: ${player.ap || 0} / AAP: ${player.aap || 0} / Total AP: ${player.adventureap || 0} / Total AAP: ${player.adventureaap || 0}`,
   );
   lines.push(`Accuracy: ${player.acc || 0}`);
   lines.push(
@@ -182,28 +202,38 @@ ${player.adventureaap || 0}`,
     `Special: Crit Dmg ${player.chrp || 0}% | Back ${player.abad || 0}% | Down ${player.adad || 0}% | Air ${player.aaad || 0}%`,
   );
 
+  const availableCombos = Array.isArray(player.availableCombos)
+    ? player.availableCombos.filter(
+        (c) => Array.isArray(c.skills) && c.skills.length > 0,
+      )
+    : [];
+
+  const combosToExport = [...availableCombos];
+
   if (Array.isArray(player.combo) && player.combo.length > 0) {
-    lines.push("");
-    lines.push("Combo Sequence:");
+    const activeInstanceIds = player.combo.map((s) => s.instanceId).join(",");
+    const alreadyInList = combosToExport.some(
+      (c) =>
+        (c.skills || []).map((s) => s.instanceId).join(",") ===
+        activeInstanceIds,
+    );
 
-    player.combo.forEach((skill, index) => {
-      const command = skill.command ? ` [${skill.command}]` : "";
-      lines.push(`${index + 1}. ${skill.name}${command}`);
-
-      (skill.hits || []).forEach((hit, hitIndex) => {
-        const hitDetails = [];
-        if (hit.normal_hits > 0) hitDetails.push(`${hit.normal_hits} Normal`);
-        if (hit.down_hits > 0) hitDetails.push(`${hit.down_hits} Down`);
-        if (hit.back_hits > 0) hitDetails.push(`${hit.back_hits} Back`);
-        if (hit.air_hits > 0) hitDetails.push(`${hit.air_hits} Air`);
-
-        const summary =
-          hitDetails.length > 0 ? hitDetails.join(", ") : "0 Landed";
-        lines.push(
-          `   • Hit ${hitIndex + 1} (${hit.damage_percent || 0}%): ${summary}`,
-        );
+    if (!alreadyInList) {
+      combosToExport.unshift({
+        name: `Combo #${combosToExport.length + 1}`,
+        skills: player.combo,
       });
-    });
+    }
+  }
+
+  for (const comboItem of combosToExport) {
+    lines.push("");
+    lines.push(
+      comboItem.name
+        ? `Combo Sequence [${comboItem.name}]:`
+        : "Combo Sequence:",
+    );
+    formatSkillsToLines(comboItem.skills, lines);
   }
 
   return lines.join("\n");
@@ -312,7 +342,6 @@ async function handleDownattackTextImport(text) {
     aaad > 0;
 
   if (!className || !spec || !hasValidStats) {
-    console.log(hp);
     statusFeedback.value = {
       type: "error",
       message:
@@ -323,7 +352,7 @@ async function handleDownattackTextImport(text) {
 
   const skillRegex = /^\s*(\d+)\.\s*(.*?)(?:\s*\[(.*?)\])?\s*$/;
   const lines = text.split("\n");
-  const comboHeaderRegex = /^\s*Combo Sequence:\s*$/i;
+  const comboHeaderRegex = /^\s*Combo Sequence(?:\s*\[(.*?)\])?:\s*$/i;
   const availableSkills = [];
   const hitRegex = /•\s*Hit\s*(\d+).*?:\s*(.*)/i;
 
@@ -342,17 +371,41 @@ async function handleDownattackTextImport(text) {
     return;
   }
 
-  const combo = [];
+  const importedCombos = [];
+  let currentCombo = null;
   let currentSkill = null;
 
   for (const line of lines) {
     const comboHeader = line.match(comboHeaderRegex);
     if (comboHeader) {
+      const parsedName = comboHeader[1]?.trim();
+      currentCombo = {
+        id: crypto.randomUUID(),
+        name: parsedName || `Combo #${importedCombos.length + 1}`,
+        class_name: className,
+        spec: spec,
+        skills: [],
+        isImported: true,
+      };
+      importedCombos.push(currentCombo);
+      currentSkill = null;
       continue;
     }
 
     const skillMatch = line.match(skillRegex);
     if (skillMatch) {
+      if (!currentCombo) {
+        currentCombo = {
+          id: crypto.randomUUID(),
+          name: `Combo #${importedCombos.length + 1}`,
+          class_name: className,
+          spec: spec,
+          skills: [],
+          isImported: true,
+        };
+        importedCombos.push(currentCombo);
+      }
+
       const skillName = skillMatch[2].trim();
       const skill = availableSkills.find(
         (s) => s.name.toLowerCase() === skillName.toLowerCase(),
@@ -369,7 +422,7 @@ async function handleDownattackTextImport(text) {
             air_hits: 0,
           })),
         };
-        combo.push(newSkill);
+        currentCombo.skills.push(newSkill);
         currentSkill = newSkill;
       } else {
         statusFeedback.value = {
@@ -397,6 +450,7 @@ async function handleDownattackTextImport(text) {
       targetHit.air_hits = Number(details.match(/(\d+)\s*Air/i)?.[1]) || 0;
     }
   }
+
   const parsedBuild = {
     name: presetName,
     class_name: className,
@@ -417,7 +471,8 @@ async function handleDownattackTextImport(text) {
     abad,
     adad,
     aaad,
-    combo,
+    combo: importedCombos[0]?.skills || [],
+    combos: importedCombos,
   };
   return parsedBuild;
 }

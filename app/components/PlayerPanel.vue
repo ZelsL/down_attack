@@ -305,6 +305,8 @@
       <div class="pt-2 border-t border-[#ffedd4]/20 flex flex-col gap-2">
         <ComboPanel
           v-model:combo="player.combo"
+          v-model:combos="player.combos"
+          v-model:available-combos="player.availableCombos"
           :player="player"
           :opponent="opponent"
         />
@@ -446,6 +448,7 @@ function selectPreset(preset) {
   }
   searchIsOpen.value = false;
   searchQuery.value = "";
-  player.value.combo = preset.combo || [];
+  player.value.combos = preset.combos || [];
+  player.value.combo = preset.combo || preset.combos?.[0]?.skills || [];
 }
 </script>
