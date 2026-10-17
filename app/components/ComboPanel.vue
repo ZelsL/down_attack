@@ -3,109 +3,282 @@
     <span class="text-xs font-bold text-[#d7ad70]/70 uppercase tracking-wider">
       Combo Sequence
     </span>
-    <div class="flex flex-wrap items-center gap-2">
-      <template v-for="skill in comboSkills" :key="skill.instanceId">
-        <div
-          class="relative flex items-center gap-2 bg-[#16161a] border border-[#ffedd4]/20 hover:border-[#d7ad70] rounded-lg p-2 transition- all cursor-pointer group select-none text-left"
-          :title="`${skill.name}\n• Left Button: Configure hits\n• Right Button: Remove`"
-          @contextmenu.prevent="removeSkillFromCombo(skill.instanceId)"
-          @click="openHitsModal(skill)"
-        >
-          <img
-            :src="skill.icon_path"
-            :alt="skill.name"
-            class="w-7 h-7 rounded object-cover bg-black/40 flex-shrink-0"
+    <div class="flex-row items-center gap-2">
+      <div
+        class="w-full bg-[#745b39] px-2 h-8 flex items-center justify-between"
+      >
+        <span class="text-xs font-bold text-[#ffedd4] tracking-wide">
+          {{ selectedCombo?.name || "New Combo" }}
+        </span>
+        <TooltipButton label="Save" class="ml-auto" @click="handleSaveCombo">
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            viewBox="0 0 448 512"
+            fill="#ffd99d"
+            class="w-4 h-4 shrink-0"
+          >
+            <path
+              d="M64 32C28.7 32 0 60.7 0 96L0 416c0 35.3 28.7 64 64 64l320 0c35.3 0 64-28.7 64-64l0-242.7c0-17-6.7-33.3-18.7-45.3L352 50.7C340 38.7 323.7 32 306.7 32L64 32zm0 96c0-17.7 14.3-32 32-32l192 0c17.7 0 32 14.3 32 32l0 64c0 17.7-14.3 32-32 32L96 224c-17.7 0-32-14.3-32-32l0-64zM224 288a64 64 0 1 1 0 128 64 64 0 1 1 0-128z"
+            />
+          </svg>
+        </TooltipButton>
+      </div>
+      <div class="w-full p-2 bg-[#131215] flex flex-col gap-2">
+        <div class="relative w-full">
+          <div
+            v-if="isOpen"
+            class="fixed inset-0 z-40 cursor-default"
+            @click="isOpen = false"
           />
-          <div class="hidden sm:flex flex-col min-w-0">
-            <span
-              class="text-xs font-bold text-[#ffedd4] group-hover:text-[#d7ad70] transition-colors leading-tight truncate max-w-[110px]"
-              :title="skill.name"
-            >
-              {{ skill.name }}
-            </span>
-            <span
-              v-if="skill.command"
-              class="text-[10px] font-mono text-[#d7ad70]/80"
-            >
-              {{ skill.command }}
-            </span>
-          </div>
-
           <button
             type="button"
-            class="opacity-0 group-hover:opacity-100 transition-opacity absolute -top-1.5 -right-1.5 w-4 h-4 rounded-full bg-red-900/90 hover:bg-red-600 border border-red-500/50 text-[#ffedd4] text-[10px] flex items-center justify-center font-bold cursor-pointer"
-            title="Remover do combo"
-            @click.stop="removeSkillFromCombo(skill.instanceId)"
+            class="w-full flex items-center justify-between px-3 py-2 bg-[#16161a] border border-[#ffedd4]/30 rounded text-xs font-medium text-[#ffedd4] hover:border-[#d7ad70] transition-colors focus:outline-none focus:border-[#d7ad70] cursor-pointer"
+            @click="isOpen = !isOpen"
           >
-            ✕
+            <span class="truncate">
+              {{ selectedCombo?.name || "No Combo Selected." }}
+            </span>
+            <span
+              class="text-xs text-[#d7ad70] transition-transform duration-200 inline-block"
+              :class="{ 'rotate-180': isOpen }"
+            >
+              ▼
+            </span>
           </button>
-        </div>
-      </template>
-      <div class="relative">
-        <!-- Botão de abrir/fechar o seletor -->
-        <div
-          v-if="isAddingSkill"
-          class="fixed inset-0 z-40 cursor-default"
-          @click="isAddingSkill = false"
-        />
-        <button
-          type="button"
-          class="h-11 px-3 border border-dashed border-[#ffedd4]/30 hover:border-[#d7ad70] rounded-lg bg-[#16161a]/60 hover:bg-[#d7ad70]/10 text- │ xs font-semibold text-[#d7ad70] flex items-center justify-center gap-1 transition-all cursor-pointer"
-          title="add skill to combo sequence"
-          @click="isAddingSkill = !isAddingSkill"
-        >
-          <span class="text-base font-bold">+</span>
-        </button>
 
-        <!-- Search Dropdown (v-if="isAddingSkill") -->
-        <div
-          v-if="isAddingSkill"
-          class="absolute left-0 bottom-full mb-2 z-50 w-64 max-h-72 bg-[#16161a] border border-[#d7ad70]/50 rounded-lg shadow-2xl flex flex-col overflow-hidden"
-        >
-          <div class="p-2 border-b border-[#ffedd4]/10 bg-[#1f1f23]">
-            <input
-              v-model="skillSearch"
-              type="text"
-              placeholder="Search for name or command (e.g SHIFT + LMB)"
-              class="w-full bg-[#16161a] border border-[#ffedd4]/20 rounded px-2.5 py-1.5 text-xs text-[#ffedd4] placeholder-[#ffedd4]/40 focus:outline-none focus:border-[#d7ad70]"
-              autofocus
-            />
-          </div>
+          <div
+            v-if="isOpen"
+            class="absolute left-0 right-0 top-full mt-1 bg-[#18181b] border border-[#ffedd4]/20 rounded shadow-2xl z-50 flex flex-col"
+          >
+            <div
+              v-if="comboIsLoading"
+              class="flex items-center justify-between gap-2 px-3 py-2 animate-pulse"
+            >
+              <div class="h-3.5 w-28 bg-[#ffedd4]/15 rounded" />
+              <div class="flex items-center gap-2 shrink-0">
+                <div class="h-3.5 w-3.5 bg-[#ffedd4]/15 rounded" />
+                <div class="h-3.5 w-3.5 bg-[#ffedd4]/15 rounded" />
+              </div>
+            </div>
 
-          <div class="overflow-y-auto p-1 flex flex-col gap-1 max-h-56">
+            <div v-else class="flex flex-col">
+              <div
+                v-for="(combo, index) in combos"
+                :key="combo.id"
+                :draggable="editingComboId !== combo.id"
+                class="flex items-center justify-between gap-2 px-3 py-1.5 text-xs text-[#ffedd4]/80 hover:bg-[#d7ad70]/15 hover:text-[#d7ad70] transition-all cursor-grab active:cursor-grabbing select-none"
+                :class="[
+                  draggedComboIndex === index ? 'opacity-40' : '',
+                  dragOverComboIndex === index
+                    ? 'bg-[#d7ad70]/25 border-y border-[#d7ad70]/60'
+                    : '',
+                ]"
+                @dragstart="onComboDragStart(index, $event)"
+                @dragover.prevent="onComboDragOver(index)"
+                @dragenter.prevent="onComboDragOver(index)"
+                @dragleave="onComboDragLeave(index)"
+                @drop.prevent="onComboDrop(index)"
+                @dragend="onComboDragEnd"
+                @click="selectCombo(combo)"
+              >
+                <input
+                  v-if="editingComboId === combo.id"
+                  v-model="editingComboName"
+                  type="text"
+                  class="flex-1 min-w-0 bg-[#131215] border border-[#d7ad70] rounded px-1.5 py-0.5 text-xs text-[#ffedd4] focus:outline-none"
+                  autofocus
+                  @click.stop
+                  @keydown.enter.prevent="confirmEditComboName(combo)"
+                  @keydown.esc.prevent="cancelEditComboName"
+                  @blur="confirmEditComboName(combo)"
+                />
+                <span v-else class="truncate flex items-center gap-1.5">
+                  <span class="truncate">{{ combo.name }}</span>
+                  <span
+                    v-if="combo.isImported"
+                    class="text-[10px] text-[#d7ad70]/70 italic shrink-0"
+                  >
+                    (Imported)
+                  </span>
+                </span>
+
+                <div class="flex items-center gap-2 shrink-0">
+                  <TooltipButton
+                    label="Edit"
+                    @click.stop="startEditComboName(combo)"
+                  >
+                    <svg
+                      xmlns="http://www.w3.org/2000/svg"
+                      viewBox="0 0 512 512"
+                      fill="#ffd99d"
+                      class="w-3.5 h-3.5 shrink-0"
+                    >
+                      <path
+                        d="M362.7 19.3L314.3 67.7 444.3 197.7l48.4-48.4c25-25 25-65.5 0-90.5L453.3 19.3c-25-25-65.5-25-90.5 0zm-71 71L58.6 323.5c-10.4 10.4-18 23.3-22.2 37.4L1 481.2C-1.5 489.7 .8 498.8 7 505s15.3 8.5 23.7 6.1l120.3-35.4c14.1-4.2 27-11.8 37.4-22.2L421.7 220.3 291.7 90.3z"
+                      />
+                    </svg>
+                  </TooltipButton>
+
+                  <TooltipButton
+                    label="Delete"
+                    @click.stop="handleDeleteCombo(combo.id)"
+                  >
+                    <svg
+                      xmlns="http://www.w3.org/2000/svg"
+                      viewBox="0 0 448 512"
+                      fill="#ffd99d"
+                      class="w-3.5 h-3.5 shrink-0"
+                    >
+                      <path
+                        d="M135.2 17.7L128 32 32 32C14.3 32 0 46.3 0 64S14.3 96 32 96l384 0c17.7 0 32-14.3 32-32s-14.3-32-32-32l-96 0-7.2-14.3C307.4 6.8 296.3 0 284.2 0L163.8 0c-12.1 0-23.2 6.8-28.6 17.7zM416 128L32 128 53.2 467c1.6 25.3 22.6 45 47.9 45l245.8 0c25.3 0 46.3-19.7 47.9-45L416 128z"
+                      />
+                    </svg>
+                  </TooltipButton>
+                </div>
+              </div>
+            </div>
+
             <button
-              v-for="skill in filteredAvailableSkills"
-              :key="skill.id"
               type="button"
-              class="flex items-center gap-2 p-1.5 rounded hover:bg-[#d7ad70]/10 transition-colors text-left group"
-              @click="addSkillToCombo(skill)"
+              class="w-full text-left px-3 py-2 bg-[#16161a] border-t border-[#ffedd4]/10 text-xs font-semibold text-[#d7ad70] hover:bg-[#d7ad70]/15 transition-colors cursor-pointer"
+              @click="handleNewCombo"
+            >
+              + New Combo
+            </button>
+          </div>
+        </div>
+
+        <div class="flex flex-wrap items-center gap-2 pt-1">
+          <template
+            v-for="(skill, index) in comboSkills"
+            :key="skill.instanceId"
+          >
+            <div
+              draggable="true"
+              class="relative flex items-center gap-2 bg-[#16161a] border rounded-lg p-2 transition-all cursor-grab active:cursor-grabbing group select-none text-left max-w-[calc(50%-0.25rem)]"
+              :class="[
+                draggedSkillIndex === index
+                  ? 'opacity-40 border-[#d7ad70]'
+                  : dragOverSkillIndex === index
+                    ? 'border-[#d7ad70] bg-[#d7ad70]/15 scale-[1.02]'
+                    : 'border-[#ffedd4]/20 hover:border-[#d7ad70]',
+              ]"
+              :title="`${skill.name}\n• Drag: Reorder\n• Left Button: Configure hits\n• Right Button: Remove`"
+              @dragstart="onSkillDragStart(index, $event)"
+              @dragover.prevent="onSkillDragOver(index)"
+              @dragenter.prevent="onSkillDragOver(index)"
+              @dragleave="onSkillDragLeave(index)"
+              @drop.prevent="onSkillDrop(index)"
+              @dragend="onSkillDragEnd"
+              @contextmenu.prevent="removeSkillFromCombo(skill.instanceId)"
+              @click="openHitsModal(skill)"
             >
               <img
                 :src="skill.icon_path"
                 :alt="skill.name"
-                class="w-6 h-6 rounded object-cover flex-shrink-0"
+                draggable="false"
+                class="w-7 h-7 rounded object-cover bg-black/40 flex-shrink-0 pointer-events-none"
               />
-              <div class="flex flex-col min-w-0">
+              <div class="hidden sm:flex flex-col min-w-0">
                 <span
-                  class="text-xs text-[#ffedd4] group-hover:text-[#d7ad70] truncate font-semibold"
+                  class="text-xs font-bold text-[#ffedd4] group-hover:text-[#d7ad70] transition-colors leading-tight truncate max-w-[95px]"
+                  :title="skill.name"
                 >
                   {{ skill.name }}
                 </span>
                 <span
                   v-if="skill.command"
-                  class="text-[10px] text-[#d7ad70]/70 font-mono"
+                  class="text-[10px] font-mono text-[#d7ad70]/80"
                 >
                   {{ skill.command }}
                 </span>
               </div>
-            </button>
 
-            <span
-              v-if="filteredAvailableSkills.length === 0"
-              class="text-xs text-[#ffedd4]/40 p-2 text-center"
+              <button
+                type="button"
+                class="opacity-0 group-hover:opacity-100 transition-opacity absolute -top-1.5 -right-1.5 w-4 h-4 rounded-full bg-red-900/90 hover:bg-red-600 border border-red-500/50 text-[#ffedd4] text-[10px] flex items-center justify-center font-bold cursor-pointer"
+                title="Remove"
+                @click.stop="removeSkillFromCombo(skill.instanceId)"
+              >
+                ✕
+              </button>
+            </div>
+          </template>
+          <div class="relative">
+            <!-- Botão de abrir/fechar o seletor -->
+            <div
+              v-if="isAddingSkill"
+              class="fixed inset-0 z-40 cursor-default"
+              @click="isAddingSkill = false"
+            />
+            <TooltipButton
+              label="Add Skill"
+              :hide-tooltip="isAddingSkill"
+              class="w-8 h-8 border border-dashed border-[#ffedd4]/30 hover:border-[#d7ad70] rounded-lg bg-[#16161a]/60 hover:bg-[#d7ad70]/10 text-xs font-semibold text-[#d7ad70] transition-all"
+              @click="isAddingSkill = !isAddingSkill"
             >
-              No skills found
-            </span>
+              <span class="text-sm font-bold text-[#ffd99d] leading-none"
+                >+</span
+              >
+            </TooltipButton>
+
+            <!-- Search Dropdown (v-if="isAddingSkill") -->
+            <div
+              v-if="isAddingSkill"
+              ref="skillDropdownRef"
+              :style="{ maxHeight: `${dropdownMaxHeight}px` }"
+              class="absolute left-0 top-full mt-2 z-50 w-64 bg-[#16161a] border border-[#d7ad70]/50 rounded-lg shadow-2xl flex flex-col overflow-hidden"
+            >
+              <div
+                class="p-2 border-b border-[#ffedd4]/10 bg-[#1f1f23] shrink-0"
+              >
+                <input
+                  ref="skillSearchInput"
+                  v-model="skillSearch"
+                  type="text"
+                  placeholder="Search for name or command (e.g SHIFT + LMB)"
+                  class="w-full bg-[#16161a] border border-[#ffedd4]/20 rounded px-2.5 py-1.5 text-xs text-[#ffedd4] placeholder-[#ffedd4]/40 focus:outline-none focus:border-[#d7ad70]"
+                />
+              </div>
+
+              <div
+                class="overflow-y-auto p-1 flex flex-col gap-1 flex-1 min-h-0"
+              >
+                <button
+                  v-for="skill in filteredAvailableSkills"
+                  :key="skill.id"
+                  type="button"
+                  class="flex items-center gap-2 p-1.5 rounded hover:bg-[#d7ad70]/10 transition-colors text-left group"
+                  @click="addSkillToCombo(skill)"
+                >
+                  <img
+                    :src="skill.icon_path"
+                    :alt="skill.name"
+                    class="w-6 h-6 rounded object-cover flex-shrink-0"
+                  />
+                  <div class="flex flex-col min-w-0">
+                    <span
+                      class="text-xs text-[#ffedd4] group-hover:text-[#d7ad70] truncate font-semibold"
+                    >
+                      {{ skill.name }}
+                    </span>
+                    <span
+                      v-if="skill.command"
+                      class="text-[10px] text-[#d7ad70]/70 font-mono"
+                    >
+                      {{ skill.command }}
+                    </span>
+                  </div>
+                </button>
+
+                <span
+                  v-if="filteredAvailableSkills.length === 0"
+                  class="text-xs text-[#ffedd4]/40 p-2 text-center"
+                >
+                  No skills found
+                </span>
+              </div>
+            </div>
           </div>
         </div>
       </div>
@@ -413,6 +586,8 @@
       </div>
     </div>
   </div>
+
+  <ErrorCard :message="comboError" @close="comboError = null" />
 </template>
 
 <script setup>
@@ -432,13 +607,45 @@ const comboSkills = defineModel("combo", {
   default: () => [],
 });
 
+const presetCombos = defineModel("combos", {
+  type: Array,
+  default: () => [],
+});
+
+const availableCombos = defineModel("availableCombos", {
+  type: Array,
+  default: () => [],
+});
+
 const isAddingSkill = ref(false);
 const skillSearch = ref("");
+const skillSearchInput = ref(null);
+const skillDropdownRef = ref(null);
+const dropdownMaxHeight = ref(240);
+
+watch(isAddingSkill, async (open) => {
+  if (open) {
+    await nextTick();
+    if (skillDropdownRef.value) {
+      const rect = skillDropdownRef.value.getBoundingClientRect();
+      const spaceBelow = window.innerHeight - rect.top - 16;
+      dropdownMaxHeight.value = Math.max(100, Math.min(288, spaceBelow));
+    }
+    skillSearchInput.value?.focus();
+  }
+});
 
 const { data: availableSkills } = await useFetch(() => {
   if (!props.player?.class_name || !props.player?.spec) return null;
   return `/api/v1/skills?class_name=${props.player.class_name}&spec=${props.player.spec}`;
 });
+
+const DIRECTION_MAP = {
+  w: "↑",
+  s: "↓",
+  a: "←",
+  d: "→",
+};
 
 const filteredAvailableSkills = computed(() => {
   if (!availableSkills.value) return [];
@@ -446,7 +653,10 @@ const filteredAvailableSkills = computed(() => {
   const query = skillSearch.value.trim().toLowerCase();
   if (!query) return availableSkills.value;
 
-  const terms = query.split(/\s+/).filter(Boolean);
+  const rawTerms = query.split(/\s+/).filter(Boolean);
+  const terms = rawTerms.map((term) =>
+    rawTerms.length > 1 && DIRECTION_MAP[term] ? DIRECTION_MAP[term] : term,
+  );
 
   return availableSkills.value.filter((skill) => {
     const skillName = skill.name?.toLowerCase() || "";
@@ -603,4 +813,245 @@ const expandedHitIndex = ref(0);
 function toggleExpandHit(index) {
   expandedHitIndex.value = expandedHitIndex.value === index ? null : index;
 }
+
+const {
+  combos,
+  getCombos,
+  saveCombos,
+  updateCombos,
+  deleteCombos,
+  reorderCombos,
+  comboIsLoading,
+  comboError,
+} = useCombos(() => props.player, comboSkills);
+
+const draggedSkillIndex = ref(null);
+const dragOverSkillIndex = ref(null);
+
+function onSkillDragStart(index, event) {
+  draggedSkillIndex.value = index;
+  if (event.dataTransfer) {
+    event.dataTransfer.effectAllowed = "move";
+  }
+}
+
+function onSkillDragOver(index) {
+  if (draggedSkillIndex.value === null || draggedSkillIndex.value === index)
+    return;
+  dragOverSkillIndex.value = index;
+}
+
+function onSkillDragLeave(index) {
+  if (dragOverSkillIndex.value === index) {
+    dragOverSkillIndex.value = null;
+  }
+}
+
+function onSkillDrop(targetIndex) {
+  const fromIndex = draggedSkillIndex.value;
+  if (fromIndex !== null && fromIndex !== targetIndex) {
+    const updated = [...comboSkills.value];
+    const [movedSkill] = updated.splice(fromIndex, 1);
+    updated.splice(targetIndex, 0, movedSkill);
+    comboSkills.value = updated;
+  }
+  draggedSkillIndex.value = null;
+  dragOverSkillIndex.value = null;
+}
+
+function onSkillDragEnd() {
+  draggedSkillIndex.value = null;
+  dragOverSkillIndex.value = null;
+}
+
+const draggedComboIndex = ref(null);
+const dragOverComboIndex = ref(null);
+
+function onComboDragStart(index, event) {
+  if (editingComboId.value !== null) {
+    event.preventDefault();
+    return;
+  }
+  draggedComboIndex.value = index;
+  if (event.dataTransfer) {
+    event.dataTransfer.effectAllowed = "move";
+  }
+}
+
+function onComboDragOver(index) {
+  if (draggedComboIndex.value === null || draggedComboIndex.value === index)
+    return;
+  dragOverComboIndex.value = index;
+}
+
+function onComboDragLeave(index) {
+  if (dragOverComboIndex.value === index) {
+    dragOverComboIndex.value = null;
+  }
+}
+
+function onComboDrop(targetIndex) {
+  const fromIndex = draggedComboIndex.value;
+  if (fromIndex !== null && fromIndex !== targetIndex) {
+    reorderCombos(fromIndex, targetIndex);
+  }
+  draggedComboIndex.value = null;
+  dragOverComboIndex.value = null;
+}
+
+function onComboDragEnd() {
+  draggedComboIndex.value = null;
+  dragOverComboIndex.value = null;
+}
+
+const isOpen = ref(false);
+const selectedCombo = ref(null);
+const editingComboId = ref(null);
+const editingComboName = ref("");
+
+function selectCombo(combo) {
+  selectedCombo.value = combo;
+  comboSkills.value = combo.skills || [];
+  isOpen.value = false;
+}
+
+function startEditComboName(combo) {
+  selectedCombo.value = combo;
+  comboSkills.value = combo.skills || [];
+  editingComboId.value = combo.id;
+  editingComboName.value = combo.name || "";
+}
+
+async function confirmEditComboName(combo) {
+  if (editingComboId.value !== combo.id) return;
+
+  const trimmedName = editingComboName.value.trim();
+  editingComboId.value = null;
+
+  if (!trimmedName || trimmedName === combo.name) return;
+
+  if (combo.isImported) {
+    combo.name = trimmedName;
+  } else {
+    await updateCombos(combo.id, trimmedName);
+  }
+
+  if (selectedCombo.value?.id === combo.id) {
+    selectedCombo.value = {
+      ...selectedCombo.value,
+      name: trimmedName,
+    };
+  }
+}
+
+function cancelEditComboName() {
+  editingComboId.value = null;
+  editingComboName.value = "";
+}
+
+async function handleDeleteCombo(id) {
+  const target = combos.value.find((c) => c.id === id);
+  if (target?.isImported) {
+    combos.value = combos.value.filter((c) => c.id !== id);
+    if (Array.isArray(presetCombos.value)) {
+      presetCombos.value = presetCombos.value.filter((c) => c.id !== id);
+    }
+  } else {
+    await deleteCombos(id);
+  }
+
+  if (selectedCombo.value?.id === id) {
+    selectedCombo.value = null;
+    comboSkills.value = [];
+  }
+}
+
+function handleNewCombo() {
+  selectedCombo.value = null;
+  comboSkills.value = [];
+  isOpen.value = false;
+  isAddingSkill.value = true;
+}
+
+async function handleSaveCombo() {
+  if (selectedCombo.value && !selectedCombo.value.isImported) {
+    await updateCombos(selectedCombo.value.id);
+  } else {
+    const importedId = selectedCombo.value?.id;
+    const customName = selectedCombo.value?.name;
+    const newCombo = await saveCombos(customName);
+    if (importedId) {
+      combos.value = combos.value.filter((c) => c.id !== importedId);
+      if (Array.isArray(presetCombos.value)) {
+        presetCombos.value = presetCombos.value.filter(
+          (c) => c.id !== importedId,
+        );
+      }
+    }
+    selectedCombo.value = newCombo;
+  }
+}
+
+function mergePresetCombos() {
+  const incomingCombos = Array.isArray(presetCombos.value)
+    ? presetCombos.value
+    : [];
+  const savedOnly = combos.value.filter((c) => !c.isImported);
+
+  if (incomingCombos.length > 0) {
+    const importedItems = incomingCombos.map((c, idx) => ({
+      ...c,
+      id: c.id || crypto.randomUUID(),
+      name: c.name || `Combo #${idx + 1}`,
+      isImported: true,
+    }));
+    combos.value = [...importedItems, ...savedOnly];
+    selectedCombo.value = importedItems[0];
+    comboSkills.value = importedItems[0].skills || [];
+  } else {
+    combos.value = savedOnly;
+  }
+}
+
+async function loadCombosForPlayer() {
+  await getCombos();
+  mergePresetCombos();
+}
+
+watch(
+  [combos, selectedCombo, comboSkills],
+  () => {
+    if (selectedCombo.value) {
+      selectedCombo.value.skills = comboSkills.value;
+    }
+    availableCombos.value = combos.value.map((c) =>
+      c.id === selectedCombo.value?.id
+        ? { ...c, skills: comboSkills.value }
+        : c,
+    );
+  },
+  { deep: true, immediate: true },
+);
+
+const { isAuthenticated } = useAuth();
+
+onMounted(() => {
+  loadCombosForPlayer();
+});
+
+watch(isAuthenticated, () => {
+  loadCombosForPlayer();
+});
+
+watch(
+  () => [props.player?.class_name, props.player?.spec],
+  () => {
+    selectedCombo.value = null;
+    loadCombosForPlayer();
+  },
+);
+
+watch(presetCombos, () => {
+  mergePresetCombos();
+});
 </script>
