@@ -31,6 +31,7 @@ const VALID_CLASSES = [
   "scholar",
   "dosa",
   "deadeye",
+  "agent",
 ];
 
 const VALID_SPECS = ["awakening", "succession", "ascension"];
