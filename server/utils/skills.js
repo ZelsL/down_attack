@@ -304,12 +304,20 @@ async function deleteOne(skillId) {
   }
 }
 
-async function findAllByClassName(className) {
-  const skillsObject = await runSelectQuery(className);
+async function findAllByClassName(className, options = {}) {
+  const skillsObject = await runSelectQuery(className, options.tag);
 
   return skillsObject;
 
-  async function runSelectQuery(className) {
+  async function runSelectQuery(className, tag) {
+    const values = [className];
+    let tagClause = "";
+
+    if (tag) {
+      values.push(JSON.stringify([tag]));
+      tagClause = `AND skills.tags @> $2::jsonb`;
+    }
+
     const results = await database.query({
       text: `
       SELECT
@@ -324,13 +332,14 @@ async function findAllByClassName(className) {
         skills_hits ON skills.id = skills_hits.skill_id
       WHERE
         LOWER(class_name) = LOWER($1)
+        ${tagClause}
       GROUP BY skills.id
       ORDER BY skills.id ASC;
-      ;`,
-      values: [className],
+      `,
+      values,
     });
 
-    if (results.rowCount === 0) {
+    if (results.rowCount === 0 && !tag) {
       throw new NotFoundError({
         message: "Class not found.",
         action: "Please check if the class is typed correctly.",
@@ -341,12 +350,12 @@ async function findAllByClassName(className) {
   }
 }
 
-async function findAllBySpec(className, spec) {
-  const skillsObject = await runSelectQuery(className, spec);
+async function findAllBySpec(className, spec, options = {}) {
+  const skillsObject = await runSelectQuery(className, spec, options.tag);
 
   return skillsObject;
 
-  async function runSelectQuery(className, spec) {
+  async function runSelectQuery(className, spec, tag) {
     const filterMap = {
       magnus: ["Magnus"],
       rabam: ["Secondary Skills"],
@@ -380,6 +389,14 @@ async function findAllBySpec(className, spec) {
       });
     }
 
+    const values = [className, filterMap[normalizedSpec]];
+    let tagClause = "";
+
+    if (tag) {
+      values.push(JSON.stringify([tag]));
+      tagClause = `AND skills.tags @> $3::jsonb`;
+    }
+
     const results = await database.query({
       text: `
       SELECT
@@ -395,14 +412,46 @@ async function findAllBySpec(className, spec) {
       WHERE
         LOWER(class_name) = LOWER($1)
         AND skills.skill_spec = ANY($2)
+        ${tagClause}
       GROUP BY skills.id
       ORDER BY skills.id ASC;
-      ;`,
-      values: [className, filterMap[normalizedSpec]],
+      `,
+      values,
     });
 
     return results.rows.map(formatSkill);
   }
+}
+
+async function findAllByTag(tag) {
+  if (!tag || typeof tag !== "string" || !tag.trim()) {
+    throw new ValidationError({
+      message: '"tag" query parameter must be a non-empty string.',
+      action: 'Please provide a valid "tag" query parameter.',
+    });
+  }
+
+  const results = await database.query({
+    text: `
+      SELECT
+        skills.*,
+        COALESCE(
+          json_agg(skills_hits.*) FILTER (WHERE skills_hits.id IS NOT NULL),
+          '[]'
+        ) AS hits
+      FROM
+        skills
+      LEFT JOIN
+        skills_hits ON skills.id = skills_hits.skill_id
+      WHERE
+        skills.tags @> $1::jsonb
+      GROUP BY skills.id
+      ORDER BY skills.id ASC;
+    `,
+    values: [JSON.stringify([tag.trim()])],
+  });
+
+  return results.rows.map(formatSkill);
 }
 
 function formatHit(hit) {
@@ -525,6 +574,7 @@ const skills = {
   findAllByClassName,
   deleteHits,
   findAllBySpec,
+  findAllByTag,
   delete: deleteOne,
 };
 

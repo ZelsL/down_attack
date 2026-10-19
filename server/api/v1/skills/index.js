@@ -6,13 +6,18 @@ export default controller.handle({
       const query = getQuery(event);
       const className = query.class_name || query.className;
       const spec = query.spec;
+      const tag = query.tag;
 
       if (className && spec) {
-        return await skills.findAllBySpec(className, spec);
+        return await skills.findAllBySpec(className, spec, { tag });
       }
 
       if (className) {
-        return await skills.findAllByClassName(className);
+        return await skills.findAllByClassName(className, { tag });
+      }
+
+      if (tag) {
+        return await skills.findAllByTag(tag);
       }
 
       throw new ValidationError({
