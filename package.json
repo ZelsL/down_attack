@@ -23,7 +23,9 @@
     "migrations:up": "node-pg-migrate -m infra/migrations --envPath .env  up",
     "migrations:up:dry": "node-pg-migrate -m infra/migrations --envPath .env --dry-run up",
     "prepare": "husky",
-    "db:seed": "npm run services:up && npm run services:wait:database && node --env-file=.env infra/scripts/seed.js"
+    "db:seed": "npm run services:up && npm run services:wait:database && node --env-file=.env infra/scripts/seed.js",
+    "db:save-seed": "node infra/scripts/save-seed.js",
+    "user:admin": "node infra/scripts/grant-admin.js"
   },
   "dependencies": {
     "@nuxt/icon": "^2.5.1",
