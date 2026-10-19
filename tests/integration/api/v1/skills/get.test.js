@@ -179,5 +179,106 @@ describe("GET to /api/v1/skills", () => {
         status_code: 404,
       });
     });
+
+    test("With tag query parameter only (global filter across classes)", async () => {
+      const shaiPartyBuff = await orchestrator.createSkill({
+        id: 4624,
+        name: "Shout to the Sky III",
+        class_name: "Shai",
+        skill_spec: "Ascension",
+        self_buffs: { max_hp: 1500 },
+        tags: ["party_buff"],
+      });
+
+      const wizardPartyBuff = await orchestrator.createSkill({
+        id: 3100,
+        name: "Speed Spell",
+        class_name: "Wizard",
+        skill_spec: "Absolute",
+        self_buffs: { attack_speed: 20, casting_speed: 20 },
+        tags: ["party_buff", "pre_buff"],
+      });
+
+      await orchestrator.createSkill({
+        id: 5619,
+        name: "Aal's Grace",
+        class_name: "Hashashin",
+        skill_spec: "Awakening",
+        tags: ["e_buff"],
+      });
+
+      const response = await fetch(
+        `${webserver.origin}/api/v1/skills?tag=party_buff`,
+      );
+
+      expect(response.status).toBe(200);
+
+      const responseBody = await response.json();
+
+      expect(Array.isArray(responseBody)).toBe(true);
+      expect(responseBody).toEqual([wizardPartyBuff, shaiPartyBuff]);
+    });
+
+    test("With className and tag query parameters", async () => {
+      const hashashinEBuff = await orchestrator.createSkill({
+        id: 5619,
+        name: "Aal's Grace",
+        class_name: "Hashashin",
+        skill_spec: "Awakening",
+        tags: ["e_buff"],
+      });
+
+      const response = await fetch(
+        `${webserver.origin}/api/v1/skills?className=Hashashin&tag=e_buff`,
+      );
+
+      expect(response.status).toBe(200);
+
+      const responseBody = await response.json();
+
+      expect(Array.isArray(responseBody)).toBe(true);
+      expect(responseBody).toEqual([hashashinEBuff]);
+    });
+
+    test("With className, spec, and tag query parameters", async () => {
+      const hashashinAwakEBuff = await orchestrator.createSkill({
+        id: 5619,
+        name: "Aal's Grace",
+        class_name: "Hashashin",
+        skill_spec: "Awakening",
+        tags: ["e_buff"],
+      });
+
+      await orchestrator.createSkill({
+        id: 5658,
+        name: "Prime: Blade's Pact",
+        class_name: "Hashashin",
+        skill_spec: "Prime",
+        tags: ["e_buff"],
+      });
+
+      const response = await fetch(
+        `${webserver.origin}/api/v1/skills?className=Hashashin&spec=awakening&tag=e_buff`,
+      );
+
+      expect(response.status).toBe(200);
+
+      const responseBody = await response.json();
+
+      expect(Array.isArray(responseBody)).toBe(true);
+      expect(responseBody).toEqual([hashashinAwakEBuff]);
+    });
+
+    test("With nonexistent tag", async () => {
+      const response = await fetch(
+        `${webserver.origin}/api/v1/skills?tag=nonexistent_tag`,
+      );
+
+      expect(response.status).toBe(200);
+
+      const responseBody = await response.json();
+
+      expect(responseBody).toEqual([]);
+    });
   });
 });
