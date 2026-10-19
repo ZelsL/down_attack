@@ -89,9 +89,7 @@ async function fetchUserFromDiscord(code) {
 }
 
 async function create(userInputValues) {
-  const newUser = await runUpsertQuery(userInputValues);
-
-  return await setFeatures(newUser.id, [
+  const defaultFeatures = [
     "read:session",
     "read:status",
     "read:user",
@@ -102,14 +100,18 @@ async function create(userInputValues) {
     "read:combo",
     "update:combo",
     "delete:combo",
-  ]);
+  ];
 
-  async function runUpsertQuery(userInputValues) {
+  const newUser = await runUpsertQuery(userInputValues, defaultFeatures);
+
+  return newUser;
+
+  async function runUpsertQuery(userInputValues, defaultFeatures) {
     const results = await database.query({
       text: `
         INSERT INTO
-          users (discord_id, username, display_name, avatar)
-        VALUES ($1, $2, $3, $4)
+          users (discord_id, username, display_name, avatar, features)
+        VALUES ($1, $2, $3, $4, $5)
         ON CONFLICT (discord_id) DO UPDATE
         SET
           username = EXCLUDED.username,
@@ -123,6 +125,7 @@ async function create(userInputValues) {
         userInputValues.username,
         userInputValues.global_name,
         userInputValues.avatar,
+        defaultFeatures,
       ],
     });
 

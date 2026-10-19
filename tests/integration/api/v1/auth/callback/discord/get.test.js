@@ -147,5 +147,40 @@ describe("GET to /api/v1/auth/callback/discord", () => {
         new Date(createdUser.updated_at).getTime(),
       );
     });
+
+    test("Login preserves existing elevated features", async () => {
+      const createdUser = await orchestrator.createUser("AdminUser");
+      await orchestrator.addFeaturesToUser(createdUser, [
+        "create:skill",
+        "update:skill",
+        "delete:skill",
+      ]);
+
+      const code = `mocked_user_${createdUser.discord_id}_AdminUserUpdated`;
+
+      const response = await fetch(
+        `${webserver.origin}/api/v1/auth/callback/discord?code=${code}`,
+        {
+          redirect: "manual",
+        },
+      );
+
+      expect(response.status).toBe(302);
+
+      const userInDatabase = await database.query({
+        text: "SELECT * FROM users WHERE id = $1;",
+        values: [createdUser.id],
+      });
+
+      const updatedUser = userInDatabase.rows[0];
+      expect(updatedUser.username).toBe("AdminUserUpdated");
+      expect(updatedUser.features).toEqual(
+        expect.arrayContaining([
+          "create:skill",
+          "update:skill",
+          "delete:skill",
+        ]),
+      );
+    });
   });
 });
