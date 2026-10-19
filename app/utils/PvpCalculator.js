@@ -1,4 +1,4 @@
-import classModifiers from "~/data/classModifiers";
+import classModifiers from "../data/classModifiers.js";
 
 export class PvpCalculator {
   constructor({ attacker = {}, defender = {}, skill = {}, hit = {} }) {
@@ -159,8 +159,7 @@ export class PvpCalculator {
 
     // Translate to HP Loss using BDO empirical constant
     const rawHpLoss = damage / 18.5546045699823;
-    const hpLoss = Math.max(1, Math.round(rawHpLoss * 100) / 100);
-    return hpLoss;
+    return Math.max(1, rawHpLoss);
   }
 
   calculateHitTotalHpLoss() {
@@ -204,7 +203,7 @@ export function calculateComboDamage(attacker, defender, combo = []) {
     }
   }
 
-  return totalHpLoss;
+  return Math.round(totalHpLoss * 100) / 100;
 }
 
 export default PvpCalculator;

@@ -5,30 +5,52 @@
     <!-- Outside the card: Showdown Damage lines directly over Player 1 and Player 2 -->
     <div class="w-full grid grid-cols-3">
       <!-- Directly above Player 1 -->
-      <div class="px-[5%]">
-        <span class="text-xs font-semibold text-[#ffedd4]">
-          {{ player1Object.class_name || "Player 1" }} vs.
-          {{ player2Object.hp }} HP
-          {{ player2Object.class_name || "Player 2" }}:
-        </span>
-        <strong class="text-xs font-bold text-[#d7ad70] ml-1">
-          {{ calculateDamageP1toP2.toLocaleString() }} ({{ p1DamagePercent }}%)
-        </strong>
+      <div class="px-[5%] flex flex-col gap-0.5">
+        <div>
+          <span class="text-xs font-semibold text-[#ffedd4]">
+            {{ player1Object.class_name || "Player 1" }} vs.
+            {{ effectivePlayer2.hp }} HP
+            {{ player2Object.class_name || "Player 2" }}:
+          </span>
+          <strong class="text-xs font-bold text-[#d7ad70] ml-1">
+            {{ calculateDamageP1toP2.toLocaleString() }} ({{
+              p1DamagePercent
+            }}%)
+          </strong>
+        </div>
+        <div class="text-[11px] text-[#ffedd4]/75">
+          <span>Hitrate: </span>
+          <strong class="text-[#d7ad70]">{{ p1HitRate }}%</strong>
+          <span class="text-[#ffedd4]/50 ml-1">
+            (Effective: {{ p1EffectiveHitRate }}%)
+          </span>
+        </div>
       </div>
 
       <!-- Empty above Center Column (Buffs) -->
       <div />
 
       <!-- Directly above Player 2 -->
-      <div class="px-[5%]">
-        <span class="text-xs font-semibold text-[#ffedd4]">
-          {{ player2Object.class_name || "Player 2" }} vs.
-          {{ player1Object.hp }} HP
-          {{ player1Object.class_name || "Player 1" }}:
-        </span>
-        <strong class="text-xs font-bold text-[#d7ad70] ml-1">
-          {{ calculateDamageP2toP1.toLocaleString() }} ({{ p2DamagePercent }}%)
-        </strong>
+      <div class="px-[5%] flex flex-col gap-0.5">
+        <div>
+          <span class="text-xs font-semibold text-[#ffedd4]">
+            {{ player2Object.class_name || "Player 2" }} vs.
+            {{ effectivePlayer1.hp }} HP
+            {{ player1Object.class_name || "Player 1" }}:
+          </span>
+          <strong class="text-xs font-bold text-[#d7ad70] ml-1">
+            {{ calculateDamageP2toP1.toLocaleString() }} ({{
+              p2DamagePercent
+            }}%)
+          </strong>
+        </div>
+        <div class="text-[11px] text-[#ffedd4]/75">
+          <span>Hitrate: </span>
+          <strong class="text-[#d7ad70]">{{ p2HitRate }}%</strong>
+          <span class="text-[#ffedd4]/50 ml-1">
+            (Effective: {{ p2EffectiveHitRate }}%)
+          </span>
+        </div>
       </div>
     </div>
 
@@ -259,6 +281,36 @@ const p2Preset = route.query.p2
 
 updatePlayer(player1Object.value, p1Preset);
 updatePlayer(player2Object.value, p2Preset);
+
+const p1HitRateRaw = computed(() => {
+  const calc = new PvpCalculator({
+    attacker: effectivePlayer1.value,
+    defender: effectivePlayer2.value,
+  });
+  return calc.calculateHitRate();
+});
+
+const p1HitRate = computed(() => (p1HitRateRaw.value * 100).toFixed(1));
+
+const p1EffectiveHitRate = computed(() => {
+  const h = p1HitRateRaw.value;
+  return ((2 * h - h * h) * 100).toFixed(1);
+});
+
+const p2HitRateRaw = computed(() => {
+  const calc = new PvpCalculator({
+    attacker: effectivePlayer2.value,
+    defender: effectivePlayer1.value,
+  });
+  return calc.calculateHitRate();
+});
+
+const p2HitRate = computed(() => (p2HitRateRaw.value * 100).toFixed(1));
+
+const p2EffectiveHitRate = computed(() => {
+  const h = p2HitRateRaw.value;
+  return ((2 * h - h * h) * 100).toFixed(1);
+});
 
 const calculateDamageP1toP2 = computed(() => {
   if (
