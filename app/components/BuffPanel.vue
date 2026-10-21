@@ -15,63 +15,40 @@
         </span>
       </div>
 
-      <div class="grid grid-cols-2 gap-2">
-        <button
-          type="button"
-          :class="[
-            'w-full flex items-center gap-2 px-2.5 py-1.5 rounded-sm border text-xs font-semibold transition-all cursor-pointer select-none',
-            isP1ShaiActive
-              ? 'bg-[#4f433c] border-[#857062] text-[#d2b996]'
-              : 'bg-[#3f3f49] border-[#555462] text-[#9e9ea7] hover:border-[#737282]',
-          ]"
-          @click="isP1ShaiActive = !isP1ShaiActive"
-        >
-          <span
-            :class="[
-              'w-2.5 h-2.5 rounded-[2px] border shrink-0 transition-all',
-              isP1ShaiActive
-                ? 'bg-[#fff1df] border-white/60 shadow-[0_0_5px_rgba(255,241,223,0.6)]'
-                : 'bg-[#292929] border-black/80',
-            ]"
+      <div v-if="partyEffects.length" class="grid grid-cols-2 gap-2">
+        <div class="flex flex-col gap-1.5">
+          <EffectToggle
+            v-for="effect in partyEffects"
+            :key="effect.id"
+            :active="activeP1Party.includes(effect.id)"
+            :skill-id="effect.id"
+            :name="effect.name"
+            :icon="effect.icon"
+            :duration="effect.duration"
+            :self-labels="effect.selfLabels"
+            :enemy-labels="effect.enemyLabels"
+            @click="toggleId(activeP1Party, effect.id)"
           />
+        </div>
 
-          <img
-            src="/skills/shai/4624.webp"
-            alt="Shout to the Sky III"
-            class="w-5 h-5 rounded-sm object-cover shrink-0 bg-black/40 border border-black/50"
+        <div class="flex flex-col gap-1.5">
+          <EffectToggle
+            v-for="effect in partyEffects"
+            :key="effect.id"
+            :active="activeP2Party.includes(effect.id)"
+            :skill-id="effect.id"
+            :name="effect.name"
+            :icon="effect.icon"
+            :duration="effect.duration"
+            :self-labels="effect.selfLabels"
+            :enemy-labels="effect.enemyLabels"
+            @click="toggleId(activeP2Party, effect.id)"
           />
-
-          <span class="truncate flex-1 text-left"> Shout to the Sky III </span>
-        </button>
-
-        <button
-          type="button"
-          :class="[
-            'w-full flex items-center gap-2 px-2.5 py-1.5 rounded-sm border text-xs font-semibold transition-all cursor-pointer select-none',
-            isP2ShaiActive
-              ? 'bg-[#4f433c] border-[#857062] text-[#d2b996]'
-              : 'bg-[#3f3f49] border-[#555462] text-[#9e9ea7] hover:border-[#737282]',
-          ]"
-          @click="isP2ShaiActive = !isP2ShaiActive"
-        >
-          <span
-            :class="[
-              'w-2.5 h-2.5 rounded-[2px] border shrink-0 transition-all',
-              isP2ShaiActive
-                ? 'bg-[#fff1df] border-white/60 shadow-[0_0_5px_rgba(255,241,223,0.6)]'
-                : 'bg-[#292929] border-black/80',
-            ]"
-          />
-
-          <img
-            src="/skills/shai/4624.webp"
-            alt="Shout to the Sky III"
-            class="w-5 h-5 rounded-sm object-cover shrink-0 bg-black/40 border border-black/50"
-          />
-
-          <span class="truncate flex-1 text-left"> Shout to the Sky III </span>
-        </button>
+        </div>
       </div>
+      <p v-else class="text-center text-[11px] text-[#ffedd4]/40 select-none">
+        No party buffs available.
+      </p>
     </div>
 
     <!-- ================= 2. Class Buff / Rage Absorption ================= -->
@@ -89,140 +66,110 @@
 
       <!-- Grid 2 columns -->
       <div class="grid grid-cols-2 gap-2">
-        <!-- P1: E-Buff e Z-Buff -->
+        <!-- P1: Rage Absorption + class buffs (e_buff) and class debuffs -->
         <div class="flex flex-col gap-1.5">
-          <button
-            type="button"
-            :class="[
-              'w-full flex items-center gap-2 px-2.5 py-1.5 rounded-sm border text-xs font-semibold transition-all cursor-pointer select-none',
-              isP1AbsorptionActive
-                ? 'bg-[#4f433c] border-[#857062] text-[#d2b996]'
-                : 'bg-[#3f3f49] border-[#555462] text-[#9e9ea7] hover:border-[#737282]',
-            ]"
+          <EffectToggle
+            :skill-id="3459"
+            name="Rage Absorption"
+            icon="/skills/warrior/3459.webp"
+            :active="isP1AbsorptionActive"
+            :self-labels="RAGE_ABSORPTION_LABELS"
             @click="isP1AbsorptionActive = !isP1AbsorptionActive"
-          >
-            <span
-              :class="[
-                'w-2.5 h-2.5 rounded-[2px] border shrink-0 transition-all',
-                isP1AbsorptionActive
-                  ? 'bg-[#fff1df] border-white/60 shadow-[0_0_5px_rgba(255,241,223,0.6)]'
-                  : 'bg-[#292929] border-black/80',
-              ]"
-            />
-
-            <img
-              src="/skills/warrior/3459.webp"
-              alt="Rage Absorption"
-              class="w-5 h-5 rounded-sm object-cover shrink-0 bg-black/40 border border-black/50"
-            />
-
-            <span class="truncate flex-1 text-left"> Rage Absorption </span>
-          </button>
-          <button
-            v-if="p1EBuff"
-            type="button"
-            :class="[
-              'w-full flex items-center gap-2 px-2.5 py-1.5 rounded-sm border text-xs font-semibold transition-all cursor-pointer select-none',
-              isP1EBuffActive
-                ? 'bg-[#4f433c] border-[#857062] text-[#d2b996]'
-                : 'bg-[#3f3f49] border-[#555462] text-[#9e9ea7] hover:border-[#737282]',
-            ]"
-            @click="isP1EBuffActive = !isP1EBuffActive"
-          >
-            <span
-              :class="[
-                'w-2.5 h-2.5 rounded-[2px] border shrink-0 transition-all',
-                isP1EBuffActive
-                  ? 'bg-[#fff1df] border-white/60 shadow-[0_0_5px_rgba(255,241,223,0.6)]'
-                  : 'bg-[#292929] border-black/80',
-              ]"
-            />
-
-            <img
-              :src="p1EBuff.icon"
-              :alt="p1EBuff.name"
-              class="w-5 h-5 rounded-sm object-cover shrink-0 bg-black/40 border border-black/50"
-            />
-
-            <span class="truncate flex-1 text-left">
-              {{ p1EBuff.name }}
-            </span>
-
-            <span
-              v-if="p1EBuff.buffs?.all_ap"
-              class="text-[10px] font-mono shrink-0 px-1 py-0.5 rounded text-[#ffedd4]/60 bg-black/20"
-            >
-              +{{ p1EBuff.buffs.all_ap }} AP
-            </span>
-          </button>
+          />
+          <EffectToggle
+            v-for="effect in p1ClassEffects"
+            :key="effect.id"
+            :active="activeP1ClassEffects.includes(effect.id)"
+            :skill-id="effect.id"
+            :name="effect.name"
+            :icon="effect.icon"
+            :duration="effect.duration"
+            :self-labels="effect.selfLabels"
+            :enemy-labels="effect.enemyLabels"
+            @click="toggleId(activeP1ClassEffects, effect.id)"
+          />
         </div>
 
-        <!-- P2: E-Buff and Z-Buff -->
+        <!-- P2: Rage Absorption + class buffs (e_buff) and class debuffs -->
         <div class="flex flex-col gap-1.5">
-          <button
-            type="button"
-            :class="[
-              'w-full flex items-center gap-2 px-2.5 py-1.5 rounded-sm border text-xs font-semibold transition-all cursor-pointer select-none',
-              isP2AbsorptionActive
-                ? 'bg-[#4f433c] border-[#857062] text-[#d2b996]'
-                : 'bg-[#3f3f49] border-[#555462] text-[#9e9ea7] hover:border-[#737282]',
-            ]"
+          <EffectToggle
+            :skill-id="3459"
+            name="Rage Absorption"
+            icon="/skills/warrior/3459.webp"
+            :active="isP2AbsorptionActive"
+            :self-labels="RAGE_ABSORPTION_LABELS"
             @click="isP2AbsorptionActive = !isP2AbsorptionActive"
+          />
+          <EffectToggle
+            v-for="effect in p2ClassEffects"
+            :key="effect.id"
+            :active="activeP2ClassEffects.includes(effect.id)"
+            :skill-id="effect.id"
+            :name="effect.name"
+            :icon="effect.icon"
+            :duration="effect.duration"
+            :self-labels="effect.selfLabels"
+            :enemy-labels="effect.enemyLabels"
+            @click="toggleId(activeP2ClassEffects, effect.id)"
+          />
+        </div>
+      </div>
+    </div>
+
+    <!-- ================= 2.5 SKILL EFFECTS (from combo) ================= -->
+    <div class="flex flex-col gap-1.5">
+      <div class="relative flex items-center justify-center my-1">
+        <div class="absolute inset-0 flex items-center">
+          <div class="w-full border-t border-[#ffedd4]/20" />
+        </div>
+        <span
+          class="relative bg-[#222122] px-3 text-[11px] font-bold text-[#d7ad70]/80 uppercase tracking-widest select-none"
+        >
+          Combo Skill Effects
+        </span>
+      </div>
+
+      <div class="grid grid-cols-2 gap-2">
+        <div class="flex flex-col gap-1.5">
+          <EffectToggle
+            v-for="effect in p1ComboEffects"
+            :key="effect.id"
+            :active="!disabledP1Effects.includes(effect.id)"
+            :skill-id="effect.id"
+            :name="effect.name"
+            :icon="effect.icon"
+            :duration="effect.duration"
+            :self-labels="effect.selfLabels"
+            :enemy-labels="effect.enemyLabels"
+            @click="toggleId(disabledP1Effects, effect.id)"
+          />
+          <p
+            v-if="!p1ComboEffects.length"
+            class="text-center text-[11px] text-[#ffedd4]/40 select-none"
           >
-            <span
-              :class="[
-                'w-2.5 h-2.5 rounded-[2px] border shrink-0 transition-all',
-                isP2AbsorptionActive
-                  ? 'bg-[#fff1df] border-white/60 shadow-[0_0_5px_rgba(255,241,223,0.6)]'
-                  : 'bg-[#292929] border-black/80',
-              ]"
-            />
+            No buffs/debuffs in combo.
+          </p>
+        </div>
 
-            <img
-              src="/skills/warrior/3459.webp"
-              alt="Rage Absorption"
-              class="w-5 h-5 rounded-sm object-cover shrink-0 bg-black/40 border border-black/50"
-            />
-
-            <span class="truncate flex-1 text-left"> Rage Absorption </span>
-          </button>
-          <button
-            v-if="p2EBuff"
-            type="button"
-            :class="[
-              'w-full flex items-center gap-2 px-2.5 py-1.5 rounded-sm border text-xs font-semibold transition-all cursor-pointer select-none',
-              isP2EBuffActive
-                ? 'bg-[#4f433c] border-[#857062] text-[#d2b996]'
-                : 'bg-[#3f3f49] border-[#555462] text-[#9e9ea7] hover:border-[#737282]',
-            ]"
-            @click="isP2EBuffActive = !isP2EBuffActive"
+        <div class="flex flex-col gap-1.5">
+          <EffectToggle
+            v-for="effect in p2ComboEffects"
+            :key="effect.id"
+            :active="!disabledP2Effects.includes(effect.id)"
+            :skill-id="effect.id"
+            :name="effect.name"
+            :icon="effect.icon"
+            :duration="effect.duration"
+            :self-labels="effect.selfLabels"
+            :enemy-labels="effect.enemyLabels"
+            @click="toggleId(disabledP2Effects, effect.id)"
+          />
+          <p
+            v-if="!p2ComboEffects.length"
+            class="text-center text-[11px] text-[#ffedd4]/40 select-none"
           >
-            <span
-              :class="[
-                'w-2.5 h-2.5 rounded-[2px] border shrink-0 transition-all',
-                isP2EBuffActive
-                  ? 'bg-[#fff1df] border-white/60 shadow-[0_0_5px_rgba(255,241,223,0.6)]'
-                  : 'bg-[#292929] border-black/80',
-              ]"
-            />
-
-            <img
-              :src="p2EBuff.icon"
-              :alt="p2EBuff.name"
-              class="w-5 h-5 rounded-sm object-cover shrink-0 bg-black/40 border border-black/50"
-            />
-
-            <span class="truncate flex-1 text-left">
-              {{ p2EBuff.name }}
-            </span>
-
-            <span
-              v-if="p2EBuff.buffs?.all_ap"
-              class="text-[10px] font-mono shrink-0 px-1 py-0.5 rounded text-[#ffedd4]/60 bg-black/20"
-            >
-              +{{ p2EBuff.buffs.all_ap }} AP
-            </span>
-          </button>
+            No buffs/debuffs in combo.
+          </p>
         </div>
       </div>
     </div>
@@ -302,8 +249,8 @@
 </template>
 
 <script setup>
-import { ref, computed, watchEffect } from "vue";
-import { CLASS_BUFF_SKILLS } from "~~/app/data/classBuffSkills.js";
+import { ref, computed, watch, watchEffect, toRef } from "vue";
+import { collectSkillEffects } from "~~/app/utils/skillEffects.js";
 
 const props = defineProps({
   player1: {
@@ -313,6 +260,11 @@ const props = defineProps({
   player2: {
     type: Object,
     required: true,
+  },
+  // Skills tagged as `party_buff`, offered as optional pre-buffs.
+  partySkills: {
+    type: Array,
+    default: () => [],
   },
 });
 
@@ -327,28 +279,134 @@ const p2Modifiers = defineModel("p2Modifiers", {
   default: () => ({ all_ap: 0, all_dr: 0, max_hp: 0, crit_damage: 0 }),
 });
 
-const p1EBuff = computed(() => {
-  const className = (props.player1?.class_name || "").toLowerCase().trim();
-  const spec =
-    props.player1?.spec === "Succession" ? "Succession" : "Awakening";
-  const classSkills = CLASS_BUFF_SKILLS[className]?.[spec] || [];
-  return classSkills[0] || null;
+// Active skill effects (party, class and combo skills) of each player. They
+// are not folded into the modifiers because combo effects only apply from the
+// skill that used them onward (see calculateComboDamage).
+const p1Effects = defineModel("p1Effects", {
+  type: Array,
+  default: () => [],
 });
 
-const p2EBuff = computed(() => {
-  const className = (props.player2?.class_name || "").toLowerCase().trim();
-  const spec =
-    props.player2?.spec === "Succession" ? "Succession" : "Awakening";
-  const classSkills = CLASS_BUFF_SKILLS[className]?.[spec] || [];
-  return classSkills[0] || null;
+const p2Effects = defineModel("p2Effects", {
+  type: Array,
+  default: () => [],
 });
 
-const isP1EBuffActive = ref(false);
-const isP2EBuffActive = ref(false);
-const isP1ShaiActive = ref(false);
-const isP2ShaiActive = ref(false);
+// Generic Rage Absorption pre-buff (not tied to a class skill).
+const RAGE_ABSORPTION_LABELS = ["+30 AP", "+30% Crit Rate"];
+
 const isP1AbsorptionActive = ref(false);
 const isP2AbsorptionActive = ref(false);
+
+// Party buffs (skills tagged `party_buff`), off by default.
+const partyEffects = computed(() =>
+  collectSkillEffects(props.partySkills, "party"),
+);
+const activeP1Party = ref([]);
+const activeP2Party = ref([]);
+
+// Buffs/debuffs found in the skills of each player's combo. They are on by
+// default, the user can disable the ones that should not be considered.
+const p1ComboEffects = computed(() =>
+  collectSkillEffects(props.player1?.combo, "combo"),
+);
+const p2ComboEffects = computed(() =>
+  collectSkillEffects(props.player2?.combo, "combo"),
+);
+const disabledP1Effects = ref([]);
+const disabledP2Effects = ref([]);
+
+// Class buffs (skills tagged `e_buff`) and debuff skills of each player's
+// class/spec, available as pre-buffs even if they are not used in the combo
+// (off by default). Skills already listed in "Combo Skill Effects" are left
+// out to avoid duplicated options.
+function useClassSkills(player) {
+  return useFetch(
+    () => {
+      if (!player.value?.class_name || !player.value?.spec) return null;
+      return `/api/v1/skills?class_name=${player.value.class_name}&spec=${player.value.spec}`;
+    },
+    { default: () => [] },
+  );
+}
+
+function getClassEffects(skills, combo) {
+  const inCombo = new Set((combo || []).map((skill) => skill.id));
+  const hasTag = (skill, tag) => skill.tags?.includes(tag);
+
+  const classBuffs = collectSkillEffects(
+    (skills || []).filter((skill) => hasTag(skill, "e_buff")),
+    "class",
+  );
+  const classDebuffs = collectSkillEffects(
+    (skills || []).filter((skill) => !hasTag(skill, "e_buff")),
+    "class",
+  ).filter((effect) => Object.keys(effect.enemy).length > 0);
+
+  return [...classBuffs, ...classDebuffs].filter(
+    (effect) => !inCombo.has(effect.id),
+  );
+}
+
+const { data: p1ClassSkills } = useClassSkills(toRef(props, "player1"));
+const { data: p2ClassSkills } = useClassSkills(toRef(props, "player2"));
+
+const p1ClassEffects = computed(() =>
+  getClassEffects(p1ClassSkills.value, props.player1?.combo),
+);
+const p2ClassEffects = computed(() =>
+  getClassEffects(p2ClassSkills.value, props.player2?.combo),
+);
+const activeP1ClassEffects = ref([]);
+const activeP2ClassEffects = ref([]);
+
+// Class buff/debuff selections belong to a class/spec, reset them when it changes.
+watch(
+  () => `${props.player1?.class_name}|${props.player1?.spec}`,
+  () => (activeP1ClassEffects.value = []),
+);
+watch(
+  () => `${props.player2?.class_name}|${props.player2?.spec}`,
+  () => (activeP2ClassEffects.value = []),
+);
+
+function toggleId(list, id) {
+  const index = list.indexOf(id);
+  if (index === -1) {
+    list.push(id);
+  } else {
+    list.splice(index, 1);
+  }
+}
+
+// Active party + class + combo effects of a player. The same skill is counted
+// once.
+function getActiveEffects({
+  partyEffectList,
+  activePartyIds,
+  classEffectList,
+  activeClassIds,
+  comboEffectList,
+  disabledIds,
+}) {
+  const active = new Map();
+
+  for (const effect of partyEffectList) {
+    if (activePartyIds.includes(effect.id)) active.set(effect.id, effect);
+  }
+  for (const effect of classEffectList) {
+    if (activeClassIds.includes(effect.id)) active.set(effect.id, effect);
+  }
+  // A pre-buff (party/class) of the same skill starts before the combo, so it
+  // is kept instead of the combo one.
+  for (const effect of comboEffectList) {
+    if (!disabledIds.includes(effect.id) && !active.has(effect.id)) {
+      active.set(effect.id, effect);
+    }
+  }
+
+  return active;
+}
 
 const AVAILABLE_ADDONS = [
   { id: "crit_dmg", label: "+ 5% Crit Dmg", buffs: { crit_damage: 5 } },
@@ -398,14 +456,11 @@ function toggleP2Addon(addonId) {
   }
 }
 
-function calculateModifiers(
-  isShaiActive,
+function calculateModifiers({
   isAbsorptionActive,
-  isEBuffActive,
-  eBuff,
   activeAddons,
   opponentAddons,
-) {
+}) {
   const mods = {
     all_ap: 0,
     max_hp: 0,
@@ -423,17 +478,9 @@ function calculateModifiers(
     aaad: 0,
   };
 
-  if (isShaiActive) mods.max_hp += 1500;
-
   if (isAbsorptionActive) {
     mods.all_ap += 30;
     mods.chc += 30;
-  }
-
-  if (isEBuffActive && eBuff?.buffs) {
-    if (eBuff.buffs.all_ap) mods.all_ap += eBuff.buffs.all_ap;
-    if (eBuff.buffs.crit_damage) mods.crit_damage += eBuff.buffs.crit_damage;
-    if (eBuff.buffs.accuracy) mods.acc += eBuff.buffs.accuracy;
   }
 
   for (const addonId of activeAddons) {
@@ -457,22 +504,36 @@ function calculateModifiers(
 }
 
 watchEffect(() => {
-  p1Modifiers.value = calculateModifiers(
-    isP1ShaiActive.value,
-    isP1AbsorptionActive.value,
-    isP1EBuffActive.value,
-    p1EBuff.value,
-    activeP1Addons.value,
-    activeP2Addons.value,
-  );
+  const p1Active = getActiveEffects({
+    partyEffectList: partyEffects.value,
+    activePartyIds: activeP1Party.value,
+    classEffectList: p1ClassEffects.value,
+    activeClassIds: activeP1ClassEffects.value,
+    comboEffectList: p1ComboEffects.value,
+    disabledIds: disabledP1Effects.value,
+  });
+  const p2Active = getActiveEffects({
+    partyEffectList: partyEffects.value,
+    activePartyIds: activeP2Party.value,
+    classEffectList: p2ClassEffects.value,
+    activeClassIds: activeP2ClassEffects.value,
+    comboEffectList: p2ComboEffects.value,
+    disabledIds: disabledP2Effects.value,
+  });
 
-  p2Modifiers.value = calculateModifiers(
-    isP2ShaiActive.value,
-    isP2AbsorptionActive.value,
-    isP2EBuffActive.value,
-    p2EBuff.value,
-    activeP2Addons.value,
-    activeP1Addons.value,
-  );
+  p1Effects.value = [...p1Active.values()];
+  p2Effects.value = [...p2Active.values()];
+
+  p1Modifiers.value = calculateModifiers({
+    isAbsorptionActive: isP1AbsorptionActive.value,
+    activeAddons: activeP1Addons.value,
+    opponentAddons: activeP2Addons.value,
+  });
+
+  p2Modifiers.value = calculateModifiers({
+    isAbsorptionActive: isP2AbsorptionActive.value,
+    activeAddons: activeP2Addons.value,
+    opponentAddons: activeP1Addons.value,
+  });
 });
 </script>
