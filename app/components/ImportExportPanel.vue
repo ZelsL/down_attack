@@ -40,6 +40,7 @@
       <input
         v-model="presetTitle"
         type="text"
+        placeholder="Custom preset name (optional)"
         class="w-full bg-[#18181b] border border-[#ffedd4]/30 rounded pl-2.5 pr-2.5 py-1.5 text-xs text-[#ffedd4] placeholder-[#947f60] focus:outline-none focus:border-[#d7ad70] transition-colors"
       />
 
@@ -101,7 +102,7 @@ const emit = defineEmits(["add-preset"]);
 const rawInput = ref("");
 const isLoading = ref(false);
 const statusFeedback = ref({ type: "", message: "" });
-const presetTitle = ref("Custom preset");
+const presetTitle = ref("");
 
 function extractGarmothId(input) {
   if (!input) return "";
@@ -143,6 +144,11 @@ async function handleGarmothImport(text) {
 
     if (!build) {
       throw new Error("No combat build found in this character.");
+    }
+
+    const customName = presetTitle.value.trim();
+    if (customName) {
+      build.name = customName;
     }
 
     return build;
@@ -307,7 +313,8 @@ async function handleDownattackTextImport(text) {
   const className = titleRegex?.[1];
   const spec = titleRegex?.[2];
   const title = titleRegex?.[3];
-  const presetName = presetTitle.value || title?.trim();
+  const presetName =
+    presetTitle.value.trim() || title?.trim() || "Custom preset";
   const hp = Number(text.match(/HP:\s*(\d+)/i)?.[1]) || 0;
   const ap = Number(text.match(/(?<!Total\s)\bAP:\s*(\d+)/i)?.[1]) || 0;
   const aap = Number(text.match(/(?<!Total\s)\bAAP:\s*(\d+)/i)?.[1]) || 0;
