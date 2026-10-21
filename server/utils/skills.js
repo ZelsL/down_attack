@@ -567,11 +567,39 @@ function validateUpdateSkillData(data) {
   }
 }
 
+async function findAll() {
+  const skillsFound = await runSelectQuery();
+
+  return skillsFound;
+
+  async function runSelectQuery() {
+    const results = await database.query(`
+      SELECT
+        skills.*,
+        COALESCE(
+          json_agg(skills_hits.* ORDER BY skills_hits.created_at ASC, skills_hits.id ASC)
+            FILTER (WHERE skills_hits.id IS NOT NULL),
+          '[]'
+        ) AS hits
+      FROM
+        skills
+      LEFT JOIN
+        skills_hits ON skills.id = skills_hits.skill_id
+      GROUP BY
+        skills.id
+      ORDER BY
+        skills.id ASC
+    ;`);
+    return results.rows;
+  }
+}
+
 const skills = {
   create,
   update,
   findOneById,
   findAllByClassName,
+  findAll,
   deleteHits,
   findAllBySpec,
   findAllByTag,
