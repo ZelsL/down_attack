@@ -163,7 +163,6 @@
                     ? 'border-[#d7ad70] bg-[#d7ad70]/15 scale-[1.02]'
                     : 'border-[#ffedd4]/20 hover:border-[#d7ad70]',
               ]"
-              :title="`${skill.name}\n• Drag: Reorder\n• Left Button: Configure hits\n• Right Button: Remove`"
               @dragstart="onSkillDragStart(index, $event)"
               @dragover.prevent="onSkillDragOver(index)"
               @dragenter.prevent="onSkillDragOver(index)"
@@ -173,13 +172,18 @@
               @contextmenu.prevent="removeSkillFromCombo(skill.instanceId)"
               @click="openHitsModal(skill)"
             >
-              <img
-                :src="skill.icon_path"
-                :alt="skill.name"
-                draggable="false"
-                class="w-7 h-7 rounded object-cover bg-black/40 flex-shrink-0 pointer-events-none"
-              />
-              <div class="hidden sm:flex flex-col min-w-0">
+              <SkillLink :skill-id="skill.id">
+                <img
+                  :src="skill.icon_path"
+                  :alt="skill.name"
+                  draggable="false"
+                  class="w-7 h-7 rounded object-cover bg-black/40 flex-shrink-0 pointer-events-none"
+                />
+              </SkillLink>
+              <div
+                class="hidden sm:flex flex-col min-w-0"
+                :title="`${skill.name}\n• Drag: Reorder\n• Left Button: Configure hits\n• Right Button: Remove`"
+              >
                 <span
                   class="text-xs font-bold text-[#ffedd4] group-hover:text-[#d7ad70] transition-colors leading-tight truncate max-w-[95px]"
                   :title="skill.name"
@@ -251,11 +255,13 @@
                   class="flex items-center gap-2 p-1.5 rounded hover:bg-[#d7ad70]/10 transition-colors text-left group"
                   @click="addSkillToCombo(skill)"
                 >
-                  <img
-                    :src="skill.icon_path"
-                    :alt="skill.name"
-                    class="w-6 h-6 rounded object-cover flex-shrink-0"
-                  />
+                  <SkillLink :skill-id="skill.id">
+                    <img
+                      :src="skill.icon_path"
+                      :alt="skill.name"
+                      class="w-6 h-6 rounded object-cover flex-shrink-0"
+                    />
+                  </SkillLink>
                   <div class="flex flex-col min-w-0">
                     <span
                       class="text-xs text-[#ffedd4] group-hover:text-[#d7ad70] truncate font-semibold"

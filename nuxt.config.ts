@@ -38,6 +38,14 @@ export default defineNuxtConfig({
       });
     },
   },
+  app: {
+    head: {
+      script: [
+        // Shows the skill details (tooltip) when hovering Bdolytics links
+        { src: "https://bdolytics.com/tooltip/script.js", async: true },
+      ],
+    },
+  },
   css: ["~/assets/css/main.css"],
   postcss: {
     plugins: {
