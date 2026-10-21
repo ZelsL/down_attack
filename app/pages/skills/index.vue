@@ -16,6 +16,14 @@
       </div>
 
       <div class="flex items-center gap-2 self-start sm:self-auto">
+        <a
+          v-if="canUpdateSkill"
+          href="/api/v1/seed"
+          download="skills.json"
+          class="px-3 py-1.5 flex items-center gap-1.5 text-xs font-medium rounded-[2px] border border-[#414043] bg-[#3c3b3f] text-[#feecd3] hover:border-[#665246] hover:bg-[#544840] hover:text-[#fdebd3] transition-colors duration-150 cursor-pointer focus:outline-none"
+        >
+          <span>Download Seed</span>
+        </a>
         <button
           v-if="canCreateSkill"
           type="button"
