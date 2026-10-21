@@ -109,7 +109,10 @@ export const useCombos = (playerSource, skillsSource) => {
 
   async function saveCombos(name) {
     const player = toValue(playerSource);
-    const skills = toValue(skillsSource);
+    const rawSkills = toValue(skillsSource);
+    const skills = Array.isArray(rawSkills)
+      ? JSON.parse(JSON.stringify(rawSkills))
+      : [];
     const combo = {
       name,
       class_name: player.class_name,
@@ -166,7 +169,10 @@ export const useCombos = (playerSource, skillsSource) => {
 
   async function updateCombos(id, name) {
     const player = toValue(playerSource);
-    const skills = toValue(skillsSource);
+    const rawSkills = toValue(skillsSource);
+    const skills = Array.isArray(rawSkills)
+      ? JSON.parse(JSON.stringify(rawSkills))
+      : [];
     const combo = {
       class_name: player.class_name,
       spec: player.spec,

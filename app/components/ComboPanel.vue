@@ -623,6 +623,11 @@ const availableCombos = defineModel("availableCombos", {
   default: () => [],
 });
 
+const selectedComboId = defineModel("selectedComboId", {
+  type: [String, Number],
+  default: null,
+});
+
 const isAddingSkill = ref(false);
 const skillSearch = ref("");
 const skillSearchInput = ref(null);
@@ -641,10 +646,13 @@ watch(isAddingSkill, async (open) => {
   }
 });
 
-const { data: availableSkills } = await useFetch(() => {
-  if (!props.player?.class_name || !props.player?.spec) return null;
-  return `/api/v1/skills?class_name=${props.player.class_name}&spec=${props.player.spec}`;
-});
+const { data: availableSkills, refresh: refreshAvailableSkills } = useFetch(
+  () => {
+    if (!props.player?.class_name || !props.player?.spec) return null;
+    return `/api/v1/skills?class_name=${props.player.class_name}&spec=${props.player.spec}`;
+  },
+  { default: () => [] },
+);
 
 const DIRECTION_MAP = {
   w: "↑",
@@ -911,19 +919,38 @@ function onComboDragEnd() {
 }
 
 const isOpen = ref(false);
-const selectedCombo = ref(null);
 const editingComboId = ref(null);
 const editingComboName = ref("");
 
+const selectedCombo = computed(
+  () =>
+    (selectedComboId.value &&
+      combos.value.find((c) => c.id === selectedComboId.value)) ||
+    null,
+);
+
+function cloneSkills(skills) {
+  if (!Array.isArray(skills)) return [];
+  return JSON.parse(JSON.stringify(skills));
+}
+
 function selectCombo(combo) {
-  selectedCombo.value = combo;
-  comboSkills.value = combo.skills || [];
+  const nextId = combo?.id || null;
+  if (selectedComboId.value === nextId) {
+    comboSkills.value = cloneSkills(combo?.skills || []);
+  } else {
+    selectedComboId.value = nextId;
+  }
   isOpen.value = false;
 }
 
 function startEditComboName(combo) {
-  selectedCombo.value = combo;
-  comboSkills.value = combo.skills || [];
+  const nextId = combo?.id || null;
+  if (selectedComboId.value === nextId) {
+    comboSkills.value = cloneSkills(combo?.skills || []);
+  } else {
+    selectedComboId.value = nextId;
+  }
   editingComboId.value = combo.id;
   editingComboName.value = combo.name || "";
 }
@@ -941,13 +968,6 @@ async function confirmEditComboName(combo) {
   } else {
     await updateCombos(combo.id, trimmedName);
   }
-
-  if (selectedCombo.value?.id === combo.id) {
-    selectedCombo.value = {
-      ...selectedCombo.value,
-      name: trimmedName,
-    };
-  }
 }
 
 function cancelEditComboName() {
@@ -956,6 +976,7 @@ function cancelEditComboName() {
 }
 
 async function handleDeleteCombo(id) {
+  const wasSelected = selectedComboId.value === id;
   const target = combos.value.find((c) => c.id === id);
   if (target?.isImported) {
     combos.value = combos.value.filter((c) => c.id !== id);
@@ -966,14 +987,19 @@ async function handleDeleteCombo(id) {
     await deleteCombos(id);
   }
 
-  if (selectedCombo.value?.id === id) {
-    selectedCombo.value = null;
-    comboSkills.value = [];
+  if (wasSelected) {
+    if (combos.value.length > 0) {
+      selectedComboId.value = combos.value[0].id;
+      comboSkills.value = cloneSkills(combos.value[0].skills || []);
+    } else {
+      selectedComboId.value = null;
+      comboSkills.value = [];
+    }
   }
 }
 
 function handleNewCombo() {
-  selectedCombo.value = null;
+  selectedComboId.value = null;
   comboSkills.value = [];
   isOpen.value = false;
   isAddingSkill.value = true;
@@ -994,28 +1020,131 @@ async function handleSaveCombo() {
         );
       }
     }
-    selectedCombo.value = newCombo;
+    selectedComboId.value = newCombo?.id || null;
   }
+}
+
+function getSkillsSignature(skills) {
+  if (!Array.isArray(skills) || skills.length === 0) return "";
+  return skills.map((s) => `${s.instanceId || ""}:${s.id || ""}`).join("|");
+}
+
+function hydrateSkillsWithLatestData(skills) {
+  if (!Array.isArray(skills) || skills.length === 0) return [];
+  const latestList = Array.isArray(availableSkills.value)
+    ? availableSkills.value
+    : [];
+  if (latestList.length === 0) return skills;
+
+  const latestById = new Map(latestList.map((s) => [s.id, s]));
+
+  return skills.map((skill) => {
+    const latest = latestById.get(skill.id);
+    if (!latest) return skill;
+
+    const latestHits = Array.isArray(latest.hits) ? latest.hits : [];
+    const currentHits = Array.isArray(skill.hits) ? skill.hits : [];
+
+    const mergedHits =
+      latestHits.length > 0
+        ? latestHits.map((latestHit, idx) => {
+            const existingHit =
+              currentHits.find((h) => h.id && h.id === latestHit.id) ||
+              currentHits[idx];
+            const count = Number(latestHit.hit_count) || 1;
+
+            if (!existingHit) {
+              return {
+                ...latestHit,
+                damage_percent: Number(latestHit.damage_percent) || 0,
+                hit_count: count,
+                normal_hits: count,
+                down_hits: 0,
+                back_hits: 0,
+                air_hits: 0,
+              };
+            }
+
+            return {
+              ...existingHit,
+              ...latestHit,
+              damage_percent: Number(latestHit.damage_percent) || 0,
+              hit_count: count,
+              normal_hits: Number(existingHit.normal_hits) || 0,
+              down_hits: latestHit.is_down_attack
+                ? Number(existingHit.down_hits) || 0
+                : 0,
+              back_hits: Number(existingHit.back_hits) || 0,
+              air_hits: latestHit.is_air_attack
+                ? Number(existingHit.air_hits) || 0
+                : 0,
+            };
+          })
+        : currentHits;
+
+    return {
+      ...skill,
+      name: latest.name ?? skill.name,
+      command: latest.command ?? skill.command,
+      icon_path: latest.icon_path ?? skill.icon_path,
+      skill_spec: latest.skill_spec ?? skill.skill_spec,
+      crit_hit_rate: latest.crit_hit_rate ?? skill.crit_hit_rate,
+      pvp_damage: latest.pvp_damage ?? skill.pvp_damage,
+      is_down_attack: latest.is_down_attack ?? skill.is_down_attack,
+      is_air_attack: latest.is_air_attack ?? skill.is_air_attack,
+      self_buffs: latest.self_buffs ?? skill.self_buffs,
+      target_debuffs: latest.target_debuffs ?? skill.target_debuffs,
+      tags: latest.tags ?? skill.tags,
+      hits: mergedHits,
+    };
+  });
 }
 
 function mergePresetCombos() {
   const incomingCombos = Array.isArray(presetCombos.value)
     ? presetCombos.value
     : [];
-  const savedOnly = combos.value.filter((c) => !c.isImported);
+  const savedOnly = combos.value
+    .filter((c) => !c.isImported)
+    .map((c) => ({
+      ...c,
+      skills: hydrateSkillsWithLatestData(cloneSkills(c.skills || [])),
+    }));
 
   if (incomingCombos.length > 0) {
     const importedItems = incomingCombos.map((c, idx) => ({
       ...c,
       id: c.id || crypto.randomUUID(),
       name: c.name || `Combo #${idx + 1}`,
+      skills: hydrateSkillsWithLatestData(cloneSkills(c.skills || [])),
       isImported: true,
     }));
     combos.value = [...importedItems, ...savedOnly];
-    selectedCombo.value = importedItems[0];
-    comboSkills.value = importedItems[0].skills || [];
   } else {
     combos.value = savedOnly;
+  }
+
+  const currentSig = getSkillsSignature(comboSkills.value);
+  const matchingCombo =
+    (selectedComboId.value &&
+      combos.value.find((c) => c.id === selectedComboId.value)) ||
+    (currentSig &&
+      combos.value.find((c) => getSkillsSignature(c.skills) === currentSig)) ||
+    null;
+
+  if (matchingCombo) {
+    selectedComboId.value = matchingCombo.id;
+    comboSkills.value = cloneSkills(matchingCombo.skills || []);
+  } else if (combos.value.length > 0 && comboSkills.value.length === 0) {
+    selectedComboId.value = combos.value[0].id;
+    comboSkills.value = cloneSkills(combos.value[0].skills || []);
+  } else if (comboSkills.value.length > 0) {
+    selectedComboId.value = null;
+    comboSkills.value = hydrateSkillsWithLatestData(
+      cloneSkills(comboSkills.value),
+    );
+  } else {
+    selectedComboId.value = null;
   }
 }
 
@@ -1024,16 +1153,46 @@ async function loadCombosForPlayer() {
   mergePresetCombos();
 }
 
+watch(availableSkills, () => {
+  if (
+    Array.isArray(availableSkills.value) &&
+    availableSkills.value.length > 0
+  ) {
+    combos.value = combos.value.map((c) => ({
+      ...c,
+      skills: hydrateSkillsWithLatestData(cloneSkills(c.skills || [])),
+    }));
+    if (comboSkills.value.length > 0) {
+      comboSkills.value = hydrateSkillsWithLatestData(
+        cloneSkills(comboSkills.value),
+      );
+    }
+  }
+});
+
 watch(
-  [combos, selectedCombo, comboSkills],
+  selectedComboId,
+  (newId, oldId) => {
+    if (!newId || newId === oldId) return;
+    const target = combos.value.find((c) => c.id === newId);
+    if (target) {
+      comboSkills.value = cloneSkills(target.skills || []);
+    }
+  },
+  { flush: "sync" },
+);
+
+watch(
+  [combos, selectedComboId, comboSkills],
   () => {
-    if (selectedCombo.value) {
+    if (
+      selectedCombo.value &&
+      selectedCombo.value.skills !== comboSkills.value
+    ) {
       selectedCombo.value.skills = comboSkills.value;
     }
     availableCombos.value = combos.value.map((c) =>
-      c.id === selectedCombo.value?.id
-        ? { ...c, skills: comboSkills.value }
-        : c,
+      c.id === selectedComboId.value ? { ...c, skills: comboSkills.value } : c,
     );
   },
   { deep: true, immediate: true },
@@ -1041,8 +1200,9 @@ watch(
 
 const { isAuthenticated } = useAuth();
 
-onMounted(() => {
-  loadCombosForPlayer();
+onMounted(async () => {
+  await refreshAvailableSkills();
+  await loadCombosForPlayer();
 });
 
 watch(isAuthenticated, () => {
@@ -1051,8 +1211,11 @@ watch(isAuthenticated, () => {
 
 watch(
   () => [props.player?.class_name, props.player?.spec],
-  () => {
-    selectedCombo.value = null;
+  (newVal, oldVal) => {
+    if (oldVal && (newVal[0] !== oldVal[0] || newVal[1] !== oldVal[1])) {
+      selectedComboId.value = null;
+      comboSkills.value = [];
+    }
     loadCombosForPlayer();
   },
 );
