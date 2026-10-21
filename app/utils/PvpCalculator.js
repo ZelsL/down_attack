@@ -1,4 +1,5 @@
 import classModifiers from "../data/classModifiers.js";
+import { applyModifiers, resolveMatchup, sumMods } from "./skillEffects.js";
 
 export class PvpCalculator {
   constructor({ attacker = {}, defender = {}, skill = {}, hit = {} }) {
@@ -182,19 +183,58 @@ export class PvpCalculator {
 
 /**
  * Calculates total HP loss for an entire combo sequence.
+ *
+ * Optional `options`:
+ * - `attackerMods` / `defenderMods`: fixed modifiers for the whole combo.
+ * - `attackerEffects` / `defenderEffects`: skill effects (see skillEffects.js).
+ *   The attacker's effects apply from the skill that used them onward, the
+ *   defender's effects are active during the whole combo.
  */
-export function calculateComboDamage(attacker, defender, combo = []) {
+export function calculateComboDamage(
+  attacker,
+  defender,
+  combo = [],
+  options = {},
+) {
   if (!attacker || !defender || !Array.isArray(combo) || combo.length === 0) {
     return 0;
   }
 
+  const {
+    attackerMods = {},
+    defenderMods = {},
+    attackerEffects = [],
+    defenderEffects = [],
+  } = options;
+  const useModifiers = Object.keys(options).length > 0;
+
   let totalHpLoss = 0;
 
-  for (const skill of combo) {
+  for (const [index, skill] of combo.entries()) {
+    let skillAttacker = attacker;
+    let skillDefender = defender;
+
+    if (useModifiers) {
+      const matchup = resolveMatchup(
+        attackerEffects,
+        defenderEffects,
+        combo,
+        index,
+      );
+      skillAttacker = applyModifiers(
+        attacker,
+        sumMods(attackerMods, matchup.attackerMods),
+      );
+      skillDefender = applyModifiers(
+        defender,
+        sumMods(defenderMods, matchup.defenderMods),
+      );
+    }
+
     for (const hit of skill.hits || []) {
       const calculator = new PvpCalculator({
-        attacker,
-        defender,
+        attacker: skillAttacker,
+        defender: skillDefender,
         skill,
         hit,
       });
