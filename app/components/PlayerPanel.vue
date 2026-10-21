@@ -307,6 +307,7 @@
           v-model:combo="player.combo"
           v-model:combos="player.combos"
           v-model:available-combos="player.availableCombos"
+          v-model:selected-combo-id="player.selectedComboId"
           :player="player"
           :opponent="opponent"
         />
@@ -450,5 +451,6 @@ function selectPreset(preset) {
   searchQuery.value = "";
   player.value.combos = preset.combos || [];
   player.value.combo = preset.combo || preset.combos?.[0]?.skills || [];
+  player.value.selectedComboId = preset.combos?.[0]?.id || null;
 }
 </script>

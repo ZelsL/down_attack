@@ -249,7 +249,7 @@
 </template>
 
 <script setup>
-import { ref, computed, watch, watchEffect, toRef } from "vue";
+import { ref, computed, watch, watchEffect, toRef, onMounted } from "vue";
 import { collectSkillEffects } from "~~/app/utils/skillEffects.js";
 
 const props = defineProps({
@@ -333,23 +333,37 @@ function useClassSkills(player) {
 function getClassEffects(skills, combo) {
   const inCombo = new Set((combo || []).map((skill) => skill.id));
   const hasTag = (skill, tag) => skill.tags?.includes(tag);
+  const isSelectableClassSkill = (skill) =>
+    (skill?.command || "").trim().toLowerCase() !== "passive" &&
+    !(skill?.name || "").startsWith("(Not in Use)");
+
+  const activeSkills = (skills || []).filter(isSelectableClassSkill);
 
   const classBuffs = collectSkillEffects(
-    (skills || []).filter((skill) => hasTag(skill, "e_buff")),
+    activeSkills.filter((skill) => hasTag(skill, "e_buff")),
     "class",
   );
-  const classDebuffs = collectSkillEffects(
-    (skills || []).filter((skill) => !hasTag(skill, "e_buff")),
+  const otherClassEffects = collectSkillEffects(
+    activeSkills.filter((skill) => !hasTag(skill, "e_buff")),
     "class",
-  ).filter((effect) => Object.keys(effect.enemy).length > 0);
+  );
 
-  return [...classBuffs, ...classDebuffs].filter(
+  return [...classBuffs, ...otherClassEffects].filter(
     (effect) => !inCombo.has(effect.id),
   );
 }
 
-const { data: p1ClassSkills } = useClassSkills(toRef(props, "player1"));
-const { data: p2ClassSkills } = useClassSkills(toRef(props, "player2"));
+const { data: p1ClassSkills, refresh: refreshP1ClassSkills } = useClassSkills(
+  toRef(props, "player1"),
+);
+const { data: p2ClassSkills, refresh: refreshP2ClassSkills } = useClassSkills(
+  toRef(props, "player2"),
+);
+
+onMounted(() => {
+  refreshP1ClassSkills();
+  refreshP2ClassSkills();
+});
 
 const p1ClassEffects = computed(() =>
   getClassEffects(p1ClassSkills.value, props.player1?.combo),
