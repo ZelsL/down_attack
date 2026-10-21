@@ -35623,7 +35623,7 @@
       "damage_reduction_rate": 50
     },
     "target_debuffs": {},
-    "tags": [],
+    "tags": ["party_buff"],
     "hits": []
   },
   {
@@ -59758,11 +59758,12 @@
     "is_grapple": false,
     "is_freezing": false,
     "self_buffs": {
+      "max_hp": 1500,
       "recover": 150,
       "duration": 60
     },
     "target_debuffs": {},
-    "tags": [],
+    "tags": ["party_buff"],
     "hits": []
   },
   {
