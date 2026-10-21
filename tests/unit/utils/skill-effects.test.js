@@ -98,13 +98,49 @@ describe("skillEffects", () => {
   });
 
   describe("resolveEffects", () => {
-    it("sums buffs from different skills", () => {
+    it("does not stack all_ap buffs from different skills, keeping only the highest", () => {
       const effects = collectSkillEffects([
-        apBuffSkill,
+        apBuffSkill, // +45 all_ap
         { id: 5, name: "Other", self_buffs: { all_ap: 20, accuracy: 60 } },
       ]);
 
-      expect(resolveEffects(effects).self).toEqual({ all_ap: 65, acc: 60 });
+      expect(resolveEffects(effects).self).toEqual({ all_ap: 45, acc: 60 });
+    });
+
+    it("keeps melee_ap separate from all_ap (taking the highest within each category) and sums them in applyModifiers", () => {
+      const effects = collectSkillEffects([
+        { id: 10, name: "Shai Buff", self_buffs: { all_ap: 30 } },
+        { id: 11, name: "Hashashin Buff", self_buffs: { all_ap: 20 } },
+        { id: 12, name: "Greatsword Training", self_buffs: { melee_ap: 32 } },
+        { id: 13, name: "Weaker Melee Buff", self_buffs: { melee_ap: 15 } },
+      ]);
+
+      const resolved = resolveEffects(effects);
+      expect(resolved.self).toEqual({ all_ap: 30, melee_ap: 32 });
+
+      const buffedPlayer = applyModifiers(
+        { ap: 300, aap: 300, adventureap: 900, adventureaap: 900 },
+        resolved.self,
+      );
+      expect(buffedPlayer.ap).toBe(362);
+      expect(buffedPlayer.aap).toBe(362);
+      expect(buffedPlayer.adventureap).toBe(962);
+      expect(buffedPlayer.adventureaap).toBe(962);
+    });
+
+    it("stacks Rage Absorption (z_buff) all_ap on top of the highest normal all_ap", () => {
+      const effects = collectSkillEffects([
+        { id: 10, name: "Shai Buff", self_buffs: { all_ap: 30 } },
+        { id: 11, name: "Hashashin Buff", self_buffs: { all_ap: 20 } },
+        {
+          id: 3459,
+          name: "Rage Absorption",
+          tags: ["z_buff"],
+          self_buffs: { all_ap: 30 },
+        },
+      ]);
+
+      expect(resolveEffects(effects).self).toEqual({ all_ap: 60 });
     });
 
     it("does not stack debuffs of the same stat, applying the strongest", () => {

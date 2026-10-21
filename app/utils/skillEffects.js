@@ -8,6 +8,9 @@
  */
 const EFFECT_STAT_MAP = {
   all_ap: { mods: ["all_ap"], label: "AP" },
+  melee_ap: { mods: ["melee_ap"], label: "Melee AP" },
+  ranged_ap: { mods: ["ranged_ap"], label: "Ranged AP" },
+  magic_ap: { mods: ["magic_ap"], label: "Magic AP" },
   max_hp: { mods: ["max_hp"], label: "HP" },
   accuracy: { mods: ["acc"], label: "ACC" },
   crit_hit_rate: { mods: ["chc"], label: "% Crit Rate" },
@@ -23,6 +26,13 @@ const EFFECT_STAT_MAP = {
     label: "% Special Atk",
   },
 };
+
+const NON_STACKING_AP_MODS = new Set([
+  "all_ap",
+  "melee_ap",
+  "ranged_ap",
+  "magic_ap",
+]);
 
 function formatValue(value) {
   return `${value > 0 ? "+" : ""}${value}`;
@@ -70,6 +80,8 @@ export function skillToEffect(skill, source = "combo") {
     return null;
   }
 
+  const isRage = Array.isArray(skill.tags) && skill.tags.includes("z_buff");
+
   return {
     id: skill.id,
     name: skill.name,
@@ -80,6 +92,7 @@ export function skillToEffect(skill, source = "combo") {
     enemy: debuffs.mods,
     selfLabels: buffs.labels,
     enemyLabels: debuffs.labels,
+    ...(isRage ? { isRage: true } : {}),
   };
 }
 
@@ -102,16 +115,28 @@ export function collectSkillEffects(skills = [], source = "combo") {
 /**
  * Merges a list of active effects into the final modifiers.
  *
- * Buffs from different skills are summed. Debuffs on the opponent do not
- * stack: for each stat only the strongest one is applied.
+ * AP buffs of the same category (`all_ap`, `melee_ap`, `ranged_ap`, `magic_ap`)
+ * do not stack with each other: only the highest value of each category is
+ * kept, except for Rage (`z_buff`) skills which stack on top. Different AP
+ * categories (e.g. `all_ap` + `melee_ap`) stack when applied in `applyModifiers`.
+ * Debuffs on the opponent do not stack: for each stat only the strongest one
+ * is applied.
  */
 export function resolveEffects(effects = []) {
   const self = {};
   const enemy = {};
+  const normalApMods = {};
+  const rageApMods = {};
 
   for (const effect of effects) {
     for (const [mod, value] of Object.entries(effect.self || {})) {
-      self[mod] = (self[mod] || 0) + value;
+      if (NON_STACKING_AP_MODS.has(mod)) {
+        const targetBucket = effect.isRage ? rageApMods : normalApMods;
+        targetBucket[mod] =
+          mod in targetBucket ? Math.max(targetBucket[mod], value) : value;
+      } else {
+        self[mod] = (self[mod] || 0) + value;
+      }
     }
     for (const [mod, value] of Object.entries(effect.enemy || {})) {
       enemy[mod] =
@@ -120,6 +145,12 @@ export function resolveEffects(effects = []) {
             ? Math.min(enemy[mod], value)
             : Math.max(enemy[mod], value)
           : value;
+    }
+  }
+
+  for (const mod of NON_STACKING_AP_MODS) {
+    if (mod in normalApMods || mod in rageApMods) {
+      self[mod] = (normalApMods[mod] || 0) + (rageApMods[mod] || 0);
     }
   }
 
@@ -149,14 +180,19 @@ export function applyModifiers(player, mods = {}) {
   const b = mods || {};
   const add = (key, bonus = 0) => (Number(p[key]) || 0) + (bonus || 0);
   const addMin0 = (key, bonus = 0) => Math.max(0, add(key, bonus));
+  const totalApBonus =
+    (b.all_ap || 0) +
+    (b.melee_ap || 0) +
+    (b.ranged_ap || 0) +
+    (b.magic_ap || 0);
 
   return {
     ...p,
     hp: add("hp", b.max_hp),
-    ap: add("ap", b.all_ap),
-    aap: add("aap", b.all_ap),
-    adventureap: add("adventureap", b.all_ap),
-    adventureaap: add("adventureaap", b.all_ap),
+    ap: add("ap", totalApBonus),
+    aap: add("aap", totalApBonus),
+    adventureap: add("adventureap", totalApBonus),
+    adventureaap: add("adventureaap", totalApBonus),
     acc: add("acc", b.acc),
     mldr: addMin0("mldr", b.mldr),
     radr: addMin0("radr", b.radr),
