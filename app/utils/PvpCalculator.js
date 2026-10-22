@@ -1,6 +1,8 @@
 import classModifiers from "../data/classModifiers.js";
 import { applyModifiers, resolveMatchup, sumMods } from "./skillEffects.js";
 
+export const MIN_DAMAGE_RATIO = 0.07;
+
 export class PvpCalculator {
   constructor({ attacker = {}, defender = {}, skill = {}, hit = {} }) {
     this.attacker = attacker;
@@ -10,6 +12,7 @@ export class PvpCalculator {
 
     this.dr = 0;
     this.evasion = 0;
+    this.damage_type = "melee";
     this.class_pvp_modifier = 0.8929;
     this.class_group = "";
 
@@ -19,6 +22,7 @@ export class PvpCalculator {
   setupClassMatchup() {
     this.dr = Number(this.defender.mldr) || 0;
     this.evasion = Number(this.defender.meev) || 0;
+    this.damage_type = "melee";
 
     const attackerName = (this.attacker.class_name || "").toLowerCase();
     const defenderName = (this.defender.class_name || "").toLowerCase();
@@ -45,6 +49,7 @@ export class PvpCalculator {
     const attackerGroup = attackerSpecData.group;
     const defenderGroup = defenderSpecData.group;
     const damageType = attackerSpecData.damage_type || "melee";
+    this.damage_type = damageType;
 
     // Set DR and Evasion based on attacker's damage type (Melee / Ranged / Magic)
     if (damageType === "magic") {
@@ -104,12 +109,94 @@ export class PvpCalculator {
 
   calculateBaseDamage() {
     const effectiveAp = this.calculateEffectiveAp();
-    const minDamage = effectiveAp * 0.05;
+    const minDamage = effectiveAp * MIN_DAMAGE_RATIO;
     const rawDamage = effectiveAp - this.dr;
     const hitRate = this.calculateHitRate();
 
-    const damage = rawDamage * (2 * hitRate - hitRate * hitRate);
-    return Math.max(minDamage, damage);
+    const hitDamage = Math.max(minDamage, rawDamage);
+    const missDamage = Math.max(minDamage, hitDamage * hitRate);
+
+    return hitDamage * hitRate + missDamage * (1 - hitRate);
+  }
+
+  calculateEffectiveHp({ dr = this.dr, evasion = this.evasion } = {}) {
+    const effectiveAp = this.calculateEffectiveAp();
+    const hp = Number(this.defender.hp) || 0;
+    if (effectiveAp <= 0 || hp <= 0) {
+      return 0;
+    }
+
+    const accuracy = Number(this.attacker.acc) || 0;
+    const hitRate = Math.min(
+      1.0,
+      Math.max(0.1, 0.67 + (accuracy - Number(evasion)) * 0.0025),
+    );
+    const minDamage = effectiveAp * MIN_DAMAGE_RATIO;
+    const hitDamage = Math.max(minDamage, effectiveAp - Number(dr));
+    const missDamage = Math.max(minDamage, hitDamage * hitRate);
+    const bdrPercent = Math.min(
+      0.99,
+      Math.max(0, (Number(this.defender.bdrp) || 0) / 100),
+    );
+
+    const mitigationFactor =
+      ((hitRate * hitDamage + (1 - hitRate) * missDamage) / effectiveAp) *
+      (1 - bdrPercent);
+
+    return mitigationFactor > 0 ? hp / mitigationFactor : 0;
+  }
+
+  calculateEffectiveHpMetrics() {
+    const effectiveAp = this.calculateEffectiveAp();
+    const accuracy = Number(this.attacker.acc) || 0;
+    const dr = Number(this.dr) || 0;
+    const evasion = Number(this.evasion) || 0;
+    const bdrp = Number(this.defender.bdrp) || 0;
+    const bdrPercent = Math.min(0.99, Math.max(0, bdrp / 100));
+    const hp = Number(this.defender.hp) || 0;
+    const hitRate = this.calculateHitRate();
+    const missRate = 1 - hitRate;
+
+    const rawEffectiveHp = this.calculateEffectiveHp({ dr, evasion });
+    const effectiveHp = Math.trunc(rawEffectiveHp);
+    const multiplier = hp > 0 ? effectiveHp / hp : 0;
+    const maxMultiplier = 1 / (MIN_DAMAGE_RATIO * (1 - bdrPercent));
+
+    const drCheck = Math.round(effectiveAp * (1 - MIN_DAMAGE_RATIO));
+    const drElbow = Math.round(effectiveAp * (1 - MIN_DAMAGE_RATIO / hitRate));
+
+    const evasionCheck = Math.round(accuracy + (0.9 - 0.33) / 0.0025);
+    const evasionStart = Math.round(accuracy - 0.33 / 0.0025);
+
+    let evasionElbow = accuracy;
+    if (effectiveAp > 0 && 1 - dr / effectiveAp > 0) {
+      const missElbow = Math.min(
+        1 - MIN_DAMAGE_RATIO / (1 - dr / effectiveAp),
+        0.9,
+      );
+      evasionElbow = Math.round(accuracy + (missElbow - 0.33) / 0.0025);
+    }
+
+    return {
+      effectiveAp,
+      accuracy,
+      dr,
+      evasion,
+      damageType: this.damage_type,
+      bdrp,
+      hp,
+      hitRate,
+      missRate,
+      rawEffectiveHp,
+      effectiveHp,
+      multiplier,
+      maxMultiplier,
+      drCheck,
+      drElbow,
+      evasionStart,
+      evasionElbow,
+      evasionCheck,
+    };
   }
 
   calculateDamageReduction() {

@@ -1,7 +1,20 @@
 <template>
   <div
-    class="min-h-[calc(100vh-4.5rem)] bg-[#222122] p-[5%] flex flex-col gap-3"
+    class="min-h-[calc(100vh-4.5rem)] bg-[#222122] px-[5%] pb-[5%] pt-2 flex flex-col gap-3"
   >
+    <!-- Top-Right Credit to @gpw -->
+    <div class="w-full max-w-[1600px] mx-auto flex justify-end px-1 py-0.5">
+      <a
+        href="https://docs.google.com/spreadsheets/d/14DlYeauGCtIw-6FuJ2LVNLPA-hKpEOTseOvL3b6aKh4/edit?gid=228218854#gid=228218854"
+        target="_blank"
+        rel="noopener noreferrer"
+        class="text-[11px] font-mono text-[#ffedd4]/60 hover:text-[#d7ad70] transition-colors"
+      >
+        Calculations & empirical formulas by
+        <span class="text-[#d7ad70] font-semibold">@gpw</span>
+      </a>
+    </div>
+
     <!-- Result UI: Dual Result Focused Card (4 combos in 4 buttons per player) -->
     <div
       class="w-full max-w-[1600px] mx-auto border border-[#ffedd4] grid grid-cols-1 md:grid-cols-2 divide-y md:divide-y-0 md:divide-x divide-[#ffedd4]"
@@ -35,14 +48,39 @@
             </span>
           </div>
           <div
-            class="flex items-center justify-between mt-1 text-[11px] font-mono text-[#ffedd4]/60"
+            class="flex flex-wrap items-center justify-between gap-2 mt-1 text-[11px] font-mono text-[#ffedd4]/60"
           >
-            <span>
-              HP:
-              <span class="text-[#ffedd4] font-semibold">
-                {{ (Number(effectivePlayer1.hp) || 0).toLocaleString() }}
+            <div class="flex items-center gap-2">
+              <span>
+                HP:
+                <span class="text-[#ffedd4] font-semibold">
+                  {{ (Number(effectivePlayer1.hp) || 0).toLocaleString() }}
+                </span>
               </span>
-            </span>
+              <span class="text-[#ffedd4]/25">|</span>
+              <span>
+                HPE:
+                <span class="text-[#d7ad70] font-semibold">
+                  {{ p1EhpMetrics.effectiveHp.toLocaleString() }}
+                </span>
+                <span class="text-[#ffedd4]/40 text-[10px] ml-0.5">
+                  ({{ p1EhpMetrics.multiplier.toFixed(2) }}x)
+                </span>
+              </span>
+              <button
+                type="button"
+                class="text-[10px] px-1.5 py-0.5 rounded-[2px] border transition-colors cursor-pointer"
+                :class="
+                  showEhpCurves && ehpSelectedPlayer === 1
+                    ? 'bg-[#4f433c] border-[#857062] text-[#d2b996]'
+                    : 'bg-[#16161a] border-[#ffedd4]/25 text-[#d7ad70] hover:border-[#d7ad70]'
+                "
+                title="View Effective HP Curves (DR / Evasion)"
+                @click="toggleEhpCurves(1)"
+              >
+                Curves
+              </button>
+            </div>
             <span>
               Hitrate:
               <span class="text-[#d7ad70] font-semibold">
@@ -164,14 +202,39 @@
             </span>
           </div>
           <div
-            class="flex items-center justify-between mt-1 text-[11px] font-mono text-[#ffedd4]/60"
+            class="flex flex-wrap items-center justify-between gap-2 mt-1 text-[11px] font-mono text-[#ffedd4]/60"
           >
-            <span>
-              HP:
-              <span class="text-[#ffedd4] font-semibold">
-                {{ (Number(effectivePlayer2.hp) || 0).toLocaleString() }}
+            <div class="flex items-center gap-2">
+              <span>
+                HP:
+                <span class="text-[#ffedd4] font-semibold">
+                  {{ (Number(effectivePlayer2.hp) || 0).toLocaleString() }}
+                </span>
               </span>
-            </span>
+              <span class="text-[#ffedd4]/25">|</span>
+              <span>
+                HPE:
+                <span class="text-[#d7ad70] font-semibold">
+                  {{ p2EhpMetrics.effectiveHp.toLocaleString() }}
+                </span>
+                <span class="text-[#ffedd4]/40 text-[10px] ml-0.5">
+                  ({{ p2EhpMetrics.multiplier.toFixed(2) }}x)
+                </span>
+              </span>
+              <button
+                type="button"
+                class="text-[10px] px-1.5 py-0.5 rounded-[2px] border transition-colors cursor-pointer"
+                :class="
+                  showEhpCurves && ehpSelectedPlayer === 2
+                    ? 'bg-[#4f433c] border-[#857062] text-[#d2b996]'
+                    : 'bg-[#16161a] border-[#ffedd4]/25 text-[#d7ad70] hover:border-[#d7ad70]'
+                "
+                title="View Effective HP Curves (DR / Evasion)"
+                @click="toggleEhpCurves(2)"
+              >
+                Curves
+              </button>
+            </div>
             <span>
               Hitrate:
               <span class="text-[#d7ad70] font-semibold">
@@ -263,6 +326,47 @@
           </div>
         </div>
       </div>
+    </div>
+
+    <!-- Toggle & Collapsible Effective HP Curves Panel -->
+    <div class="w-full max-w-[1600px] mx-auto flex flex-col gap-2">
+      <div class="flex justify-end">
+        <button
+          type="button"
+          class="px-3 py-1.5 rounded-sm border text-xs font-mono transition-all cursor-pointer flex items-center gap-2"
+          :class="
+            showEhpCurves
+              ? 'bg-[#4f433c] border-[#857062] text-[#d2b996] font-semibold'
+              : 'bg-[#16161a] border-[#ffedd4]/30 text-[#d7ad70] hover:border-[#d7ad70]'
+          "
+          @click="showEhpCurves = !showEhpCurves"
+        >
+          <span>
+            {{
+              showEhpCurves
+                ? "Hide HPE Curves (DR / Evasion)"
+                : "View HPE Curves (DR / Evasion)"
+            }}
+          </span>
+          <span
+            class="text-[10px] transition-transform duration-200 inline-block"
+            :class="{ 'rotate-180': showEhpCurves }"
+          >
+            ▼
+          </span>
+        </button>
+      </div>
+
+      <EffectiveHpPanel
+        v-if="showEhpCurves"
+        v-model:selected-player="ehpSelectedPlayer"
+        :p1-attacker="p1Matchup.attacker"
+        :p1-defender="p2Matchup.defender"
+        :p2-attacker="p2Matchup.attacker"
+        :p2-defender="p1Matchup.defender"
+        :player1-name="player1Object.class_name || 'Player 1'"
+        :player2-name="player2Object.class_name || 'Player 2'"
+      />
     </div>
 
     <!-- 3-Column Calculator Grid -->
@@ -709,6 +813,36 @@ const p2Preset = route.query.p2
 
 updatePlayer(player1Object.value, p1Preset);
 updatePlayer(player2Object.value, p2Preset);
+
+const showEhpCurves = ref(false);
+const ehpSelectedPlayer = ref(1);
+
+function toggleEhpCurves(playerNumber) {
+  if (showEhpCurves.value && ehpSelectedPlayer.value === playerNumber) {
+    showEhpCurves.value = false;
+    return;
+  }
+  ehpSelectedPlayer.value = playerNumber;
+  showEhpCurves.value = true;
+}
+
+// Player 1's Effective HP is calculated with Player 2 as attacker and Player 1 as defender.
+const p1EhpMetrics = computed(() => {
+  const calc = new PvpCalculator({
+    attacker: p2Matchup.value.attacker,
+    defender: p2Matchup.value.defender,
+  });
+  return calc.calculateEffectiveHpMetrics();
+});
+
+// Player 2's Effective HP is calculated with Player 1 as attacker and Player 2 as defender.
+const p2EhpMetrics = computed(() => {
+  const calc = new PvpCalculator({
+    attacker: p1Matchup.value.attacker,
+    defender: p1Matchup.value.defender,
+  });
+  return calc.calculateEffectiveHpMetrics();
+});
 
 const p1HitRateRaw = computed(() => {
   const calc = new PvpCalculator({

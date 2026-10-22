@@ -149,4 +149,75 @@ describe("PvpCalculator (Official BDO PvP Spreadsheet Benchmarks)", () => {
     expect(totalHpLoss.toFixed(1)).toBe("3274.2");
     expect(percentHpLoss.toFixed(1)).toBe("26.2");
   });
+
+  test("Example 5: Effective HP & Breakpoints with 7% minimum damage floor (KR Patch)", () => {
+    // Equivalent to effectiveAp = 1100 (Awakening: 1102 + 0 - 2 = 1100)
+    const ehpAttacker = {
+      class_name: "Warrior",
+      spec: "Awakening",
+      ap: 350,
+      aap: 350,
+      adventureap: 1102,
+      adventureaap: 1102,
+      acc: 1330,
+    };
+
+    const ehpDefender = {
+      class_name: "Warrior",
+      spec: "Awakening",
+      hp: 15000,
+      bdrp: 30,
+      mldr: 850,
+      radr: 850,
+      madr: 850,
+      meev: 1250,
+      raev: 1250,
+      maev: 1250,
+    };
+
+    const calc = new PvpCalculator({
+      attacker: ehpAttacker,
+      defender: ehpDefender,
+    });
+
+    const metrics = calc.calculateEffectiveHpMetrics();
+
+    expect(metrics.effectiveAp).toBe(1100);
+    expect(metrics.effectiveHp).toBe(95906);
+    expect(metrics.multiplier.toFixed(4)).toBe("6.3937");
+    expect(metrics.maxMultiplier.toFixed(4)).toBe("20.4082");
+    expect(metrics.drCheck).toBe(1023);
+    expect(metrics.drElbow).toBe(1011);
+    expect(metrics.evasionStart).toBe(1198);
+    expect(metrics.evasionElbow).toBe(1475);
+    expect(metrics.evasionCheck).toBe(1558);
+  });
+
+  test("Example 6: Base damage applies 7% floor separately to hit and miss in the elbow region", () => {
+    const calc = new PvpCalculator({
+      attacker: {
+        class_name: "Warrior",
+        spec: "Awakening",
+        ap: 350,
+        aap: 350,
+        adventureap: 1002,
+        adventureaap: 1002,
+        acc: 1000,
+      },
+      defender: {
+        class_name: "Warrior",
+        spec: "Awakening",
+        hp: 10000,
+        bdrp: 0,
+        mldr: 920,
+        meev: 1068, // hitRate = 0.67 + (1000 - 1068)*0.0025 = 0.5
+      },
+    });
+
+    // effectiveAp = 1000, minDamage = 70 (7%), rawDamage = 80, hitRate = 0.5
+    // hitDamage = max(70, 80) = 80
+    // missDamage = max(70, 80 * 0.5 = 40) = 70 (clamped at 7% floor!)
+    // expected = 80 * 0.5 + 70 * 0.5 = 75
+    expect(calc.calculateBaseDamage()).toBeCloseTo(75, 5);
+  });
 });
