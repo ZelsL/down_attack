@@ -689,6 +689,7 @@
                     readonly
                     type="text"
                     class="w-full bg-[#121110] border border-[#584938] rounded px-3 py-2 text-xs font-mono text-[#dfcaa2] focus:outline-none select-all"
+                    @copy.prevent="copyObsUrl"
                   />
                 </div>
                 <button
