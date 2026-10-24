@@ -4,19 +4,19 @@
       <!-- 1st Row: Upper Bronze Bar (Title & Active Tab Icon) -->
       <div class="w-full bg-[#775d3a] px-4 h-8 flex items-center space-x-2">
         <span
-          class="w-6 h-6 bg-[#ffedd4] inline-block transition-colors"
+          class="w-6 h-6 shrink-0 bg-[#ffedd4] inline-block transition-colors"
           :style="{
             mask: `url(${currentTab.icon}) no-repeat center / contain`,
             WebkitMask: `url(${currentTab.icon}) no-repeat center / contain`,
           }"
         />
-        <span class="font-semibold text-sm text-[#ffedd4]">
+        <span class="font-semibold text-sm text-[#ffedd4] whitespace-nowrap">
           {{ currentTab.name }}
         </span>
 
         <div
           v-if="!authIsLoading"
-          class="w-full bg-[#775d3a] justify-end h-8 flex items-center space-x-2"
+          class="flex-1 bg-[#775d3a] justify-end h-8 flex items-center space-x-2"
         >
           <button
             v-if="!isAuthenticated"
@@ -126,6 +126,12 @@ const tabs = [
     path: "/calculator",
   },
   {
+    id: "solare",
+    name: "Solare Overlay",
+    icon: "/icons/overlay.png",
+    path: "/solare",
+  },
+  {
     id: "discord",
     name: "Discord",
     icon: "/icons/discord.png",
@@ -137,6 +143,9 @@ const tabs = [
 const activeTab = computed(() => {
   if (route.path.startsWith("/calculator")) {
     return "calculator";
+  }
+  if (route.path.startsWith("/solare")) {
+    return "solare";
   }
   if (route.path === "/") {
     return "home";
