@@ -25,8 +25,12 @@ definePageMeta({
 
 const route = useRoute();
 
-useHead({
+useSeoMeta({
   title: "Solare Stream Overlay",
+  robots: "noindex, nofollow",
+});
+
+useHead({
   style: [
     {
       children:

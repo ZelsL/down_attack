@@ -9,7 +9,12 @@
 <script setup>
 useHead({
   titleTemplate: (titleChunk) => {
-    return titleChunk ? `${titleChunk} - Down Attack` : "Down Attack";
+    if (!titleChunk) {
+      return "Down Attack — BDO PvP Damage Calculator & Arena of Solare Overlay";
+    }
+    return titleChunk.includes("Down Attack")
+      ? titleChunk
+      : `${titleChunk} — Down Attack`;
   },
 });
 </script>

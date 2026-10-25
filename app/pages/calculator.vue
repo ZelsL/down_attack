@@ -971,7 +971,17 @@ onUnmounted(() => {
   saveToLocal();
 });
 
-useHead({
-  title: "Calculator",
+useSeoMeta({
+  title: "BDO PvP Damage & Combo Calculator (HPE & Hit Rate)",
+  description:
+    "Simulate Black Desert Online (BDO) 1v1 and Arena of Solare PvP damage. Compare 4 skill combos side-by-side, inspect DR & Evasion Effective HP (HPE) curves, Hit Rate, class modifiers, and import Garmoth builds. Calculadora de dano PvP e combos do BDO.",
+  keywords:
+    "BDO PvP Damage Calculator, Calculadora de Dano BDO, Calculadora PvP Black Desert, BDO Combo Calculator, BDO Hit Rate Calculator, BDO Effective HP Calculator, Curva de HPE BDO, DR vs Evasion BDO, Garmoth Build Import",
+  ogTitle: "BDO PvP Damage & Combo Calculator — Down Attack",
+  ogDescription:
+    "Side-by-side BDO PvP damage simulator with 4-slot combo builder, DR & Evasion Effective HP (HPE) curves, Hit Rate, and Garmoth import.",
+  twitterTitle: "BDO PvP Damage & Combo Calculator — Down Attack",
+  twitterDescription:
+    "Side-by-side BDO PvP damage simulator with 4-slot combo builder, DR & Evasion Effective HP (HPE) curves, Hit Rate, and Garmoth import.",
 });
 </script>
