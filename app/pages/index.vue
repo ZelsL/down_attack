@@ -412,8 +412,48 @@
 import { ref, computed, onMounted, onUnmounted } from "vue";
 import { PvpCalculator, calculateComboDamage } from "~/utils/PvpCalculator.js";
 
+useSeoMeta({
+  title:
+    "Down Attack — BDO PvP Damage Calculator & Arena of Solare Stream Overlay",
+  description:
+    "Free Black Desert Online (BDO) PvP Damage & Combo Calculator with Effective HP (HPE) curves, Hit Rate simulation, Garmoth build import, and live Arena of Solare OBS stream overlay. Calculadora de dano PvP e overlay de Solare para BDO.",
+  keywords:
+    "BDO PvP Calculator, Black Desert Online Damage Calculator, Calculadora BDO, Calculadora de Dano BDO, BDO Arena of Solare Overlay, Overlay Solare BDO, BDO OBS Overlay, BDO Effective HP, BDO Combo Builder, Garmoth Import, Down Attack",
+  ogTitle:
+    "Down Attack — BDO PvP Damage Calculator & Arena of Solare Stream Overlay",
+  ogDescription:
+    "Compare BDO PvP skill combos side-by-side, inspect DR & Evasion Effective HP curves, and track live Arena of Solare PDL in OBS Studio.",
+  twitterTitle:
+    "Down Attack — BDO PvP Damage Calculator & Arena of Solare Stream Overlay",
+  twitterDescription:
+    "Compare BDO PvP skill combos side-by-side, inspect DR & Evasion Effective HP curves, and track live Arena of Solare PDL in OBS Studio.",
+});
+
 useHead({
-  title: "Home",
+  script: [
+    {
+      type: "application/ld+json",
+      innerHTML: JSON.stringify({
+        "@context": "https://schema.org",
+        "@type": "WebApplication",
+        name: "Down Attack",
+        alternateName: [
+          "BDO PvP Damage Calculator",
+          "Calculadora de Dano BDO",
+          "BDO Arena of Solare Overlay",
+        ],
+        applicationCategory: "GameApplication",
+        operatingSystem: "Web",
+        description:
+          "Black Desert Online (BDO) PvP Damage & Combo Calculator with Effective HP (HPE) survival curves and real-time Arena of Solare OBS stream overlay.",
+        offers: {
+          "@type": "Offer",
+          price: "0",
+          priceCurrency: "USD",
+        },
+      }),
+    },
+  ],
 });
 
 // ============================================================================

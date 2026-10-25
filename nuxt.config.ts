@@ -40,6 +40,32 @@ export default defineNuxtConfig({
   },
   app: {
     head: {
+      htmlAttrs: {
+        lang: "en",
+      },
+      meta: [
+        { charset: "utf-8" },
+        { name: "viewport", content: "width=device-width, initial-scale=1" },
+        { name: "theme-color", content: "#1e1d1e" },
+        {
+          name: "description",
+          content:
+            "Free Black Desert Online (BDO) PvP Damage & Combo Calculator with Effective HP (HPE) curves, Garmoth build import, and live Arena of Solare OBS stream overlay. Calculadora de dano PvP e overlay de Solare para BDO.",
+        },
+        {
+          name: "keywords",
+          content:
+            "BDO PvP Calculator, Black Desert Online Damage Calculator, Calculadora BDO, Calculadora de Dano BDO, BDO Arena of Solare Overlay, Overlay Solare BDO, BDO OBS Overlay, BDO Effective HP, BDO Combo Builder, Garmoth Import, Down Attack",
+        },
+        { property: "og:site_name", content: "Down Attack" },
+        { property: "og:type", content: "website" },
+        {
+          property: "og:image",
+          content: "/images/solare/solare-icon-game@4x.png",
+        },
+        { name: "twitter:card", content: "summary" },
+      ],
+      link: [{ rel: "icon", type: "image/x-icon", href: "/favicon.ico" }],
       script: [
         // Shows the skill details (tooltip) when hovering Bdolytics links
         { src: "https://bdolytics.com/tooltip/script.js", async: true },

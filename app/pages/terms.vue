@@ -501,8 +501,10 @@
 </template>
 
 <script setup>
-useHead({
+useSeoMeta({
   title: "Terms of Service",
+  description:
+    "Terms of Service, usage guidelines, and community disclaimers for Down Attack (Black Desert Online PvP Calculator & Arena of Solare Overlay).",
 });
 
 definePageMeta({

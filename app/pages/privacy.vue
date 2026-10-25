@@ -454,8 +454,10 @@
 </template>
 
 <script setup>
-useHead({
+useSeoMeta({
   title: "Privacy Policy",
+  description:
+    "Privacy Policy for Down Attack explaining how Discord authentication, saved presets, and Arena of Solare overlay sessions are handled.",
 });
 
 definePageMeta({

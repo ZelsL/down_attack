@@ -949,8 +949,18 @@
 import { ref, computed, watch, onMounted, onUnmounted } from "vue";
 import { getClassName, getSkillBranch } from "~/utils/solareTier.js";
 
-useHead({
-  title: "Solare Overlay",
+useSeoMeta({
+  title: "BDO Arena of Solare OBS Stream Overlay & PDL Tracker",
+  description:
+    "Free real-time Black Desert Online (BDO) Arena of Solare stream overlay for OBS Studio. Track your rank tier, live session PDL delta, win streak bonus, Win/Loss ratio, and combat averages across SA, NA, EU, KR, JP, RU, TR, and TW. Overlay de Arena de Solare para BDO.",
+  keywords:
+    "BDO Solare Overlay, Arena of Solare OBS Overlay, Overlay de Solare BDO, BDO Stream Widget, BDO PDL Tracker, Arena de Solare Ranking BDO, Black Desert OBS Overlay",
+  ogTitle: "BDO Arena of Solare OBS Stream Overlay — Down Attack",
+  ogDescription:
+    "Real-time OBS browser widget for BDO Arena of Solare with live session PDL tracking, win streak bonuses, and combat averages across all regions.",
+  twitterTitle: "BDO Arena of Solare OBS Stream Overlay — Down Attack",
+  twitterDescription:
+    "Real-time OBS browser widget for BDO Arena of Solare with live session PDL tracking, win streak bonuses, and combat averages across all regions.",
 });
 
 definePageMeta({
