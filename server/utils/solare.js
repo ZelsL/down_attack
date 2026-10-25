@@ -55,7 +55,8 @@ async function getEnrichedMatchHistory(region, nick, userNo = null) {
     const streakBonus = isWinner ? getWinStreakBonus(consecutiveWins) : 0;
     const baseDelta =
       row.vary_rank_rating !== null ? Number(row.vary_rank_rating) : null;
-    const effectiveDelta = baseDelta !== null ? baseDelta + streakBonus : null;
+    // Pearl Abyss's _myVaryRankRating already includes the Win Streak Bonus (+2, +5, +8).
+    const effectiveDelta = baseDelta;
 
     return {
       record_no: Number(row.record_no),
@@ -437,6 +438,24 @@ async function getOverlayData({ nick, region, token } = {}) {
     targetRegion = sessionRow.region.toUpperCase();
     targetNick = sessionRow.user_nickname;
     targetUserNo = sessionRow.user_no || null;
+
+    // Touch session updated_at at most once every 5 minutes so the crawler can prioritize active OBS overlays.
+    const lastUpdatedMs = sessionRow.updated_at
+      ? new Date(sessionRow.updated_at).getTime()
+      : 0;
+    if (Date.now() - lastUpdatedMs > 5 * 60 * 1000) {
+      await database.query({
+        text: `
+          UPDATE
+            solare_overlay_sessions
+          SET
+            updated_at = timezone('utc', now())
+          WHERE
+            id = $1
+          ;`,
+        values: [sessionRow.id],
+      });
+    }
   }
 
   const playerResult = await database.query({

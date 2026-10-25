@@ -283,12 +283,12 @@ describe("POST /api/v1/solare/session", () => {
       expect(resetSession.anchor_record_no).toBe("920908");
       expect(resetSession.session_start_record_no).toBe("920908");
 
-      // Play 4 consecutive wins after 920908:
-      // 920909: Win 1 (+25 + 0 = 25)
-      // 920910: Win 2 (+25 + 2 = 27)
-      // 920911: Win 3 (+26 + 2 = 28)
-      // 920912: Win 4 (+27 + 5 = 32)
-      // Total delta with Win Streak Bonus = 112 -> 1958 + 112 = 2070
+      // Play 4 consecutive wins after 920908 (PA vary_rank_rating already includes streak bonus):
+      // 920909: Win 1 (+25)
+      // 920910: Win 2 (+27)
+      // 920911: Win 3 (+28)
+      // 920912: Win 4 (+32)
+      // Total delta = 112 -> 1958 + 112 = 2070
       await orchestrator.createSolareMatch({
         record_no: 920909,
         user_nickname: "Shxtey",
@@ -299,19 +299,19 @@ describe("POST /api/v1/solare/session", () => {
         record_no: 920910,
         user_nickname: "Shxtey",
         is_winner: true,
-        vary_rank_rating: 25,
+        vary_rank_rating: 27,
       });
       await orchestrator.createSolareMatch({
         record_no: 920911,
         user_nickname: "Shxtey",
         is_winner: true,
-        vary_rank_rating: 26,
+        vary_rank_rating: 28,
       });
       await orchestrator.createSolareMatch({
         record_no: 920912,
         user_nickname: "Shxtey",
         is_winner: true,
-        vary_rank_rating: 27,
+        vary_rank_rating: 32,
       });
 
       const streakResetResponse = await fetch(

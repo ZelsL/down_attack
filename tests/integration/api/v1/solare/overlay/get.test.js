@@ -308,40 +308,40 @@ describe("GET /api/v1/solare/overlay", () => {
       expect(sessionResponse.status).toBe(201);
       const createdSession = await sessionResponse.json();
 
-      // Win 1 (streak 1 -> +0 bonus): base 25 -> effective 25
+      // Win 1: +23
       await orchestrator.createSolareMatch({
         record_no: 930001,
         user_nickname: "Okazaki",
         user_no: 777001,
         is_winner: true,
-        vary_rank_rating: 25,
+        vary_rank_rating: 23,
       });
 
-      // Win 2 (streak 2 -> +2 bonus): base 25 -> effective 27
+      // Win 2 (streak 2, vary_rank_rating from PA already includes +2 bonus): +22
       await orchestrator.createSolareMatch({
         record_no: 930002,
         user_nickname: "Okazaki",
         user_no: 777001,
         is_winner: true,
-        vary_rank_rating: 25,
+        vary_rank_rating: 22,
       });
 
-      // Win 3 (streak 3 -> +2 bonus): base 26 -> effective 28
+      // Win 3 (streak 3, vary_rank_rating from PA already includes +2 bonus): +25
       await orchestrator.createSolareMatch({
         record_no: 930003,
         user_nickname: "Okazaki",
         user_no: 777001,
         is_winner: true,
-        vary_rank_rating: 26,
+        vary_rank_rating: 25,
       });
 
-      // Win 4 (streak 4 -> +5 bonus): base 27 -> effective 32 (real Okazaki case)
+      // Win 4 (streak 4, vary_rank_rating from PA already includes +5 bonus): +34
       await orchestrator.createSolareMatch({
         record_no: 930004,
         user_nickname: "Okazaki",
         user_no: 777001,
         is_winner: true,
-        vary_rank_rating: 27,
+        vary_rank_rating: 34,
       });
 
       const streak4Response = await fetch(
@@ -350,23 +350,28 @@ describe("GET /api/v1/solare/overlay", () => {
       expect(streak4Response.status).toBe(200);
       const streak4Body = await streak4Response.json();
 
-      // 25 + 27 + 28 + 32 = 112 net PDL -> 1612 rating
-      expect(streak4Body.rating).toBe(1612);
-      expect(streak4Body.session.net_pdl).toBe(112);
-      expect(streak4Body.session.recent_deltas).toEqual([32, 28, 27, 25]);
+      // 23 + 22 + 25 + 34 = 104 net PDL -> 1604 rating
+      expect(streak4Body.rating).toBe(1604);
+      expect(streak4Body.session.net_pdl).toBe(104);
+      expect(streak4Body.session.recent_deltas).toEqual([34, 25, 22, 23]);
 
-      // Wins 5, 6, 7 (+5 bonus each: 25+5=30) and Win 8 (+8 bonus: 25+8=33)
-      for (const recNo of [930005, 930006, 930007, 930008]) {
+      // Wins 5, 6, 7 (+30 each) and Win 8 (+33)
+      for (const [recNo, vary] of [
+        [930005, 30],
+        [930006, 30],
+        [930007, 30],
+        [930008, 33],
+      ]) {
         await orchestrator.createSolareMatch({
           record_no: recNo,
           user_nickname: "Okazaki",
           user_no: 777001,
           is_winner: true,
-          vary_rank_rating: 25,
+          vary_rank_rating: vary,
         });
       }
 
-      // Loss on 930009 (-20, resets streak to 0) and Win on 930010 (streak 1 -> +0 bonus: 25)
+      // Loss on 930009 (-20) and Win on 930010 (+25)
       await orchestrator.createSolareMatch({
         record_no: 930009,
         user_nickname: "Okazaki",
@@ -389,9 +394,9 @@ describe("GET /api/v1/solare/overlay", () => {
       expect(fullStreakResponse.status).toBe(200);
       const fullStreakBody = await fullStreakResponse.json();
 
-      // Previous 112 + (30 + 30 + 30 + 33) - 20 + 25 = 240 net PDL -> 1740 rating
-      expect(fullStreakBody.rating).toBe(1740);
-      expect(fullStreakBody.session.net_pdl).toBe(240);
+      // Previous 104 + (30 + 30 + 30 + 33) - 20 + 25 = 232 net PDL -> 1732 rating
+      expect(fullStreakBody.rating).toBe(1732);
+      expect(fullStreakBody.session.net_pdl).toBe(232);
       expect(fullStreakBody.session.recent_deltas).toEqual([
         25, -20, 33, 30, 30,
       ]);
