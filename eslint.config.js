@@ -3,8 +3,6 @@ import withNuxt from "./.nuxt/eslint.config.mjs";
 export default withNuxt(
   {
     ignores: [
-      "front-end/**",
-      "back-end/**",
       "infra/migrations/**",
       ".nuxt/**",
       ".output/**",
