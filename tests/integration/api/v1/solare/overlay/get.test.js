@@ -178,6 +178,9 @@ describe("GET /api/v1/solare/overlay", () => {
       );
 
       expect(overlayWithTokenResponse.status).toBe(200);
+      expect(overlayWithTokenResponse.headers.get("cache-control")).toBe(
+        "public, max-age=0, s-maxage=10, stale-while-revalidate=10",
+      );
 
       const overlayWithTokenBody = await overlayWithTokenResponse.json();
 
