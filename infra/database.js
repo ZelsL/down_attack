@@ -1,4 +1,4 @@
-import { Client } from "pg";
+import { Client, Pool } from "pg";
 import { ServiceError } from "./errors.js";
 
 function getSSL() {
@@ -31,11 +31,44 @@ function getDatabaseCredentials() {
   };
 }
 
+let pool;
+
+function getPool() {
+  if (!pool) {
+    pool = new Pool({
+      ...getDatabaseCredentials(),
+      max: 10,
+      idleTimeoutMillis: 30000,
+      connectionTimeoutMillis: 15000,
+      allowExitOnIdle: true,
+    });
+  }
+  return pool;
+}
+
 async function query(queryObject) {
-  let client;
+  // In the Jest runner process (orchestrator), use an ephemeral connection to avoid
+  // holding an idle connection alongside the Nuxt server or hanging under jest.useFakeTimers().
+  if (process.env.JEST_WORKER_ID) {
+    let client;
+    try {
+      client = await getNewClient();
+      const res = await client.query(queryObject);
+      return res;
+    } catch (error) {
+      const serviceErrorObject = new ServiceError({
+        message: "Error on connection with the Database or on the Query.",
+        cause: error,
+      });
+      throw serviceErrorObject;
+    } finally {
+      await client?.end();
+    }
+  }
+
   try {
-    client = await getNewClient();
-    const res = await client.query(queryObject);
+    const activePool = getPool();
+    const res = await activePool.query(queryObject);
     return res;
   } catch (error) {
     const serviceErrorObject = new ServiceError({
@@ -43,8 +76,6 @@ async function query(queryObject) {
       cause: error,
     });
     throw serviceErrorObject;
-  } finally {
-    await client?.end();
   }
 }
 
