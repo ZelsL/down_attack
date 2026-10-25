@@ -248,6 +248,17 @@
                       <span class="text-stone-500">
                         #{{ activeLatestMatch.record_no }}
                       </span>
+                      <span
+                        v-if="
+                          formatRelativeMatchTime(activeLatestMatch.match_date)
+                        "
+                        class="text-stone-400 text-[11px]"
+                      >
+                        •
+                        {{
+                          formatRelativeMatchTime(activeLatestMatch.match_date)
+                        }}
+                      </span>
                     </div>
                     <div v-else class="text-xs font-mono text-stone-400">
                       No recorded matches found yet
@@ -435,45 +446,27 @@
             </div>
 
             <!-- Starting Rating Input Row -->
-            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 items-center">
-              <div>
-                <label
-                  class="text-[11px] font-semibold uppercase tracking-wider text-stone-400 block mb-1"
+            <div>
+              <label
+                class="text-[11px] font-semibold uppercase tracking-wider text-stone-400 block mb-1"
+              >
+                Starting Rating (PDL)
+              </label>
+              <div class="relative">
+                <input
+                  v-model.number="startingRatingInput"
+                  type="number"
+                  min="0"
+                  max="9999"
+                  class="w-full bg-[#151413] border border-[#584938] focus:border-[#c5a059] rounded px-3 py-1.5 text-xs font-mono font-bold text-[#dfcaa2] focus:outline-none"
+                />
+                <button
+                  type="button"
+                  class="absolute right-2 top-1.5 text-[10px] text-stone-400 hover:text-stone-200 underline cursor-pointer"
+                  @click="resetBaselineInput"
                 >
-                  Starting Rating (PDL)
-                </label>
-                <div class="relative">
-                  <input
-                    v-model.number="startingRatingInput"
-                    type="number"
-                    min="0"
-                    max="9999"
-                    class="w-full bg-[#151413] border border-[#584938] focus:border-[#c5a059] rounded px-3 py-1.5 text-xs font-mono font-bold text-[#dfcaa2] focus:outline-none"
-                  />
-                  <button
-                    type="button"
-                    class="absolute right-2 top-1.5 text-[10px] text-stone-400 hover:text-stone-200 underline cursor-pointer"
-                    @click="resetBaselineInput"
-                  >
-                    Reset
-                  </button>
-                </div>
-              </div>
-
-              <div>
-                <label
-                  class="text-[11px] font-semibold uppercase tracking-wider text-stone-400 block mb-1"
-                >
-                  Session Target Goal
-                </label>
-                <select
-                  v-model="sessionGoal"
-                  class="w-full bg-[#151413] border border-[#584938] focus:border-[#c5a059] rounded px-2.5 py-1.5 text-xs text-stone-200 focus:outline-none"
-                >
-                  <option value="none">None (Track Net PDL)</option>
-                  <option value="next_tier">Reach Next Tier</option>
-                  <option value="plus_100">+100 PDL Today</option>
-                </select>
+                  Reset
+                </button>
               </div>
             </div>
 
@@ -675,6 +668,7 @@
                   Your Private OBS Browser Source URL
                 </label>
                 <button
+                  v-if="sessionToken"
                   type="button"
                   class="text-[10px] font-mono text-[#c5a059] hover:underline cursor-pointer"
                   @click="isTokenMasked = !isTokenMasked"
@@ -976,7 +970,6 @@ const regions = ["SA", "NA", "EU", "KR", "JP", "RU", "TR", "TW"];
 const selectedRegion = ref("SA");
 const familyNameInput = ref("Okazaki");
 const selectedLayout = ref("vertical");
-const sessionGoal = ref("none");
 
 const isSearching = ref(false);
 const searchStatus = ref("demo"); // 'demo' | 'loading' | 'found' | 'error'
@@ -1016,6 +1009,7 @@ const demoOverlayData = {
     damage_done: 214000,
     damage_taken: 138000,
     recovery: 96000,
+    match_date: new Date(Date.now() - 12 * 60 * 1000).toISOString(),
   },
   overall: {
     wins: 79,
@@ -1065,6 +1059,27 @@ function formatCompactStat(val) {
     return `${Math.round(num / 1000)}K`;
   }
   return String(num);
+}
+
+function formatRelativeMatchTime(isoDate) {
+  if (!isoDate) return "";
+  const timeMs = new Date(isoDate).getTime();
+  if (Number.isNaN(timeMs)) return "";
+
+  const diffSec = Math.max(0, Math.floor((Date.now() - timeMs) / 1000));
+  if (diffSec < 60) {
+    return "Just now";
+  }
+  const diffMin = Math.floor(diffSec / 60);
+  if (diffMin < 60) {
+    return `${diffMin}m ago`;
+  }
+  const diffHours = Math.floor(diffMin / 60);
+  if (diffHours < 24) {
+    return `${diffHours}h ago`;
+  }
+  const diffDays = Math.floor(diffHours / 24);
+  return `${diffDays}d ago`;
 }
 
 const activeEffectiveRating = computed(() => {
@@ -1134,19 +1149,31 @@ const fullObsUrl = computed(() => {
     typeof window !== "undefined"
       ? window.location.origin
       : "https://downattack.com";
-  const tokenParam = sessionToken.value || "a8f93e1b77a09c4d99824ff712b0a991";
-  return `${origin}/solare/overlay?token=${tokenParam}&layout=${selectedLayout.value}`;
+  if (sessionToken.value) {
+    return `${origin}/solare/overlay?token=${encodeURIComponent(sessionToken.value)}&layout=${selectedLayout.value}`;
+  }
+  const targetNick = (
+    livePlayerData.value?.user_nickname ||
+    familyNameInput.value ||
+    "Okazaki"
+  ).trim();
+  const targetRegion = (
+    livePlayerData.value?.region ||
+    selectedRegion.value ||
+    "SA"
+  ).toUpperCase();
+  return `${origin}/solare/overlay?nick=${encodeURIComponent(targetNick)}&region=${encodeURIComponent(targetRegion)}&layout=${selectedLayout.value}`;
 });
 
 const displayedObsUrl = computed(() => {
-  if (!isTokenMasked.value) {
+  if (!sessionToken.value || !isTokenMasked.value) {
     return fullObsUrl.value;
   }
   const origin =
     typeof window !== "undefined"
       ? window.location.origin
       : "https://downattack.com";
-  const rawToken = sessionToken.value || "a8f93e1b77a09c4d99824ff712b0a991";
+  const rawToken = sessionToken.value;
   const masked =
     rawToken.length > 12
       ? `${rawToken.slice(0, 6)}••••••••${rawToken.slice(-4)}`
@@ -1205,14 +1232,15 @@ async function handleSearchPlayer() {
     params.set("nick", trimmedNick);
     params.set("region", selectedRegion.value);
 
-    // If stored token matches same player & region, pass token to also load active session
-    if (
+    const isSamePlayerSession =
       sessionToken.value &&
       livePlayerData.value &&
       livePlayerData.value.user_nickname?.toLowerCase() ===
         trimmedNick.toLowerCase() &&
-      livePlayerData.value.region === selectedRegion.value
-    ) {
+      livePlayerData.value.region === selectedRegion.value;
+
+    // If stored token matches same player & region, pass token to also load active session
+    if (isSamePlayerSession) {
       params.set("token", sessionToken.value);
     }
 
@@ -1226,9 +1254,14 @@ async function handleSearchPlayer() {
       return;
     }
 
+    if (!isSamePlayerSession && sessionToken.value) {
+      sessionToken.value = "";
+    }
+
     livePlayerData.value = body;
     searchStatus.value = "found";
     previewRatingOverride.value = null;
+    syncSecondsAgo.value = 0;
 
     if (body.rating !== null && body.rating !== undefined) {
       startingRatingInput.value = Number(body.rating);
@@ -1280,12 +1313,8 @@ async function handleStartOrResetSession() {
 
     let body = await response.json();
 
-    // If stored token no longer exists in DB (e.g. after a DB reset), create a fresh session automatically
-    if (
-      response.status === 404 &&
-      payload.token &&
-      body?.message === "Overlay session not found."
-    ) {
+    // If stored token no longer exists in DB (e.g. after a DB reset or different player), create a fresh session automatically
+    if ((response.status === 404 || response.status === 403) && payload.token) {
       sessionToken.value = "";
       delete payload.token;
       response = await fetch("/api/v1/solare/session", {
@@ -1318,6 +1347,7 @@ async function handleStartOrResetSession() {
     if (overlayRes.ok) {
       livePlayerData.value = await overlayRes.json();
       searchStatus.value = "found";
+      syncSecondsAgo.value = 0;
     }
 
     sessionButtonLabel.value = `SESSION LIVE (${body.anchor_rating} BASELINE)`;
@@ -1339,6 +1369,9 @@ async function handleStartOrResetSession() {
 async function copyObsUrl() {
   if (typeof navigator === "undefined" || !navigator.clipboard) return;
   try {
+    if (!sessionToken.value && searchStatus.value === "found") {
+      await handleStartOrResetSession();
+    }
     await navigator.clipboard.writeText(fullObsUrl.value);
     copiedUrl.value = true;
     setTimeout(() => {
@@ -1349,10 +1382,42 @@ async function copyObsUrl() {
   }
 }
 
+async function syncDashboardOverlay() {
+  if (isSearching.value || isSavingSession.value) return;
+  if (!sessionToken.value && searchStatus.value !== "found") return;
+
+  try {
+    const params = new URLSearchParams();
+    if (sessionToken.value) {
+      params.set("token", sessionToken.value);
+    } else if (livePlayerData.value?.user_nickname) {
+      params.set("nick", livePlayerData.value.user_nickname);
+      params.set("region", livePlayerData.value.region || selectedRegion.value);
+    } else {
+      return;
+    }
+
+    const res = await fetch(`/api/v1/solare/overlay?${params.toString()}`);
+    if (res.ok) {
+      const body = await res.json();
+      livePlayerData.value = body;
+      if (body.rating !== null && body.rating !== undefined) {
+        startingRatingInput.value = Number(body.rating);
+      }
+    }
+  } catch {
+    // Silent background sync error ignored
+  }
+}
+
 onMounted(async () => {
   syncClockInterval = setInterval(() => {
-    syncSecondsAgo.value =
-      syncSecondsAgo.value >= 20 ? 1 : syncSecondsAgo.value + 1;
+    if (syncSecondsAgo.value >= 20) {
+      syncSecondsAgo.value = 1;
+      syncDashboardOverlay();
+    } else {
+      syncSecondsAgo.value += 1;
+    }
   }, 1000);
 
   if (typeof window === "undefined") return;

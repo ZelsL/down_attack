@@ -487,29 +487,33 @@ async function getOverlayData({ nick, region, token } = {}) {
   const matchesResult = await database.query({
     text: `
       SELECT
-        record_no,
-        user_nickname,
-        user_no,
-        class_type,
-        skill_branch_type,
-        is_winner,
-        vary_rank_rating,
-        kill_count,
-        death_count,
-        cc_applied_count,
-        damage_done,
-        damage_taken,
-        recovery
+        mp.record_no,
+        mp.user_nickname,
+        mp.user_no,
+        mp.class_type,
+        mp.skill_branch_type,
+        mp.is_winner,
+        mp.vary_rank_rating,
+        mp.kill_count,
+        mp.death_count,
+        mp.cc_applied_count,
+        mp.damage_done,
+        mp.damage_taken,
+        mp.recovery,
+        COALESCE(m.match_date, m.crawled_at, mp.created_at) AS match_date
       FROM
-        solare_match_players
+        solare_match_players mp
+      LEFT JOIN
+        solare_matches m
+        ON m.region = mp.region AND m.record_no = mp.record_no
       WHERE
-        region = $1
+        mp.region = $1
         AND (
-          ($3::bigint IS NOT NULL AND user_no = $3::bigint)
-          OR LOWER(user_nickname) = LOWER($2)
+          ($3::bigint IS NOT NULL AND mp.user_no = $3::bigint)
+          OR LOWER(mp.user_nickname) = LOWER($2)
         )
       ORDER BY
-        record_no ASC
+        mp.record_no ASC
       ;`,
     values: [targetRegion, targetNick, resolvedUserNo],
   });
@@ -638,6 +642,9 @@ async function getOverlayData({ nick, region, token } = {}) {
         damage_done: Number(latestMatchRow.damage_done || 0),
         damage_taken: Number(latestMatchRow.damage_taken || 0),
         recovery: Number(latestMatchRow.recovery || 0),
+        match_date: latestMatchRow.match_date
+          ? new Date(latestMatchRow.match_date).toISOString()
+          : null,
       }
     : null;
 
