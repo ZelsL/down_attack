@@ -202,6 +202,7 @@ describe("GET /api/v1/solare/overlay", () => {
           damage_done: 90000,
           damage_taken: 75000,
           recovery: 30000,
+          match_date: expect.any(String),
         },
         overall: {
           wins: 89,
