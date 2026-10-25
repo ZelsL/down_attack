@@ -21,30 +21,10 @@ function getWinStreakBonus(consecutiveWins) {
   return 0;
 }
 
-async function getEnrichedMatchHistory(region, nick, userNo = null) {
-  const result = await database.query({
-    text: `
-      SELECT
-        record_no,
-        is_winner,
-        vary_rank_rating
-      FROM
-        solare_match_players
-      WHERE
-        region = $1
-        AND (
-          ($3::bigint IS NOT NULL AND user_no = $3::bigint)
-          OR LOWER(user_nickname) = LOWER($2)
-        )
-      ORDER BY
-        record_no ASC
-      ;`,
-    values: [region, nick, userNo],
-  });
-
+function enrichMatchRows(rows) {
   let consecutiveWins = 0;
 
-  return result.rows.map((row) => {
+  return rows.map((row) => {
     const isWinner = row.is_winner === true;
     if (isWinner) {
       consecutiveWins += 1;
@@ -67,6 +47,30 @@ async function getEnrichedMatchHistory(region, nick, userNo = null) {
       effective_delta: effectiveDelta,
     };
   });
+}
+
+async function getEnrichedMatchHistory(region, nick, userNo = null) {
+  const result = await database.query({
+    text: `
+      SELECT
+        record_no,
+        is_winner,
+        vary_rank_rating
+      FROM
+        solare_match_players
+      WHERE
+        region = $1
+        AND (
+          ($3::bigint IS NOT NULL AND user_no = $3::bigint)
+          OR LOWER(user_nickname) = LOWER($2)
+        )
+      ORDER BY
+        record_no ASC
+      ;`,
+    values: [region, nick, userNo],
+  });
+
+  return enrichMatchRows(result.rows);
 }
 
 function validateRegion(region) {
@@ -480,30 +484,22 @@ async function getOverlayData({ nick, region, token } = {}) {
   const playerRow = playerResult.rows[0] || null;
   const resolvedUserNo = playerRow?.user_no || targetUserNo || null;
 
-  const matchStatsResult = await database.query({
+  const matchesResult = await database.query({
     text: `
       SELECT
-        COUNT(*)::int AS total_matches,
-        COUNT(*) FILTER (WHERE is_winner = true)::int AS match_wins,
-        COUNT(*) FILTER (WHERE is_winner = false)::int AS match_losses,
-        MAX(record_no) AS latest_record_no,
-        ROUND(COALESCE(AVG(kill_count), 0), 1)::float AS avg_kills,
-        ROUND(COALESCE(AVG(death_count), 0), 1)::float AS avg_deaths,
-        ROUND(COALESCE(AVG(cc_applied_count), 0), 1)::float AS avg_cc,
-        ROUND(COALESCE(AVG(damage_done), 0))::int AS avg_damage_done,
-        ROUND(COALESCE(AVG(damage_taken), 0))::int AS avg_damage_taken,
-        ROUND(COALESCE(AVG(recovery), 0))::int AS avg_recovery,
-        (ARRAY_AGG(user_nickname ORDER BY record_no DESC))[1] AS latest_nickname,
-        (ARRAY_AGG(user_no ORDER BY record_no DESC) FILTER (WHERE user_no IS NOT NULL))[1] AS latest_user_no,
-        (ARRAY_AGG(class_type ORDER BY record_no DESC))[1] AS latest_class_type,
-        (ARRAY_AGG(skill_branch_type ORDER BY record_no DESC))[1] AS latest_skill_branch_type,
-        (ARRAY_AGG(is_winner ORDER BY record_no DESC))[1] AS latest_is_winner,
-        (ARRAY_AGG(kill_count ORDER BY record_no DESC))[1]::int AS latest_kills,
-        (ARRAY_AGG(death_count ORDER BY record_no DESC))[1]::int AS latest_deaths,
-        (ARRAY_AGG(cc_applied_count ORDER BY record_no DESC))[1]::float AS latest_cc,
-        (ARRAY_AGG(damage_done ORDER BY record_no DESC))[1]::int AS latest_damage_done,
-        (ARRAY_AGG(damage_taken ORDER BY record_no DESC))[1]::int AS latest_damage_taken,
-        (ARRAY_AGG(recovery ORDER BY record_no DESC))[1]::int AS latest_recovery
+        record_no,
+        user_nickname,
+        user_no,
+        class_type,
+        skill_branch_type,
+        is_winner,
+        vary_rank_rating,
+        kill_count,
+        death_count,
+        cc_applied_count,
+        damage_done,
+        damage_taken,
+        recovery
       FROM
         solare_match_players
       WHERE
@@ -512,12 +508,15 @@ async function getOverlayData({ nick, region, token } = {}) {
           ($3::bigint IS NOT NULL AND user_no = $3::bigint)
           OR LOWER(user_nickname) = LOWER($2)
         )
+      ORDER BY
+        record_no ASC
       ;`,
     values: [targetRegion, targetNick, resolvedUserNo],
   });
 
-  const matchRow = matchStatsResult.rows[0] || null;
-  const hasMatches = matchRow && matchRow.total_matches > 0;
+  const matchRows = matchesResult.rows;
+  const totalMatches = matchRows.length;
+  const hasMatches = totalMatches > 0;
 
   if (!playerRow && !hasMatches) {
     throw new NotFoundError({
@@ -526,24 +525,48 @@ async function getOverlayData({ nick, region, token } = {}) {
     });
   }
 
+  const latestMatchRow = hasMatches ? matchRows[totalMatches - 1] : null;
+  let latestUserNo = null;
+  let matchWins = 0;
+  let matchLosses = 0;
+  let sumKills = 0;
+  let sumDeaths = 0;
+  let sumCc = 0;
+  let sumDamageDone = 0;
+  let sumDamageTaken = 0;
+  let sumRecovery = 0;
+
+  for (let i = 0; i < totalMatches; i += 1) {
+    const row = matchRows[i];
+    if (row.user_no !== null && row.user_no !== undefined) {
+      latestUserNo = row.user_no;
+    }
+    if (row.is_winner === true) {
+      matchWins += 1;
+    } else if (row.is_winner === false) {
+      matchLosses += 1;
+    }
+    sumKills += Number(row.kill_count || 0);
+    sumDeaths += Number(row.death_count || 0);
+    sumCc += Number(row.cc_applied_count || 0);
+    sumDamageDone += Number(row.damage_done || 0);
+    sumDamageTaken += Number(row.damage_taken || 0);
+    sumRecovery += Number(row.recovery || 0);
+  }
+
   const canonicalNick =
-    playerRow?.user_nickname || matchRow?.latest_nickname || targetNick;
+    playerRow?.user_nickname || latestMatchRow?.user_nickname || targetNick;
   const canonicalUserNo =
-    playerRow?.user_no || matchRow?.latest_user_no || resolvedUserNo || null;
-  const classType =
-    playerRow?.class_type ?? matchRow?.latest_class_type ?? null;
+    playerRow?.user_no || latestUserNo || resolvedUserNo || null;
+  const classType = playerRow?.class_type ?? latestMatchRow?.class_type ?? null;
   const skillBranchType =
-    playerRow?.skill_branch_type ?? matchRow?.latest_skill_branch_type ?? null;
-  const latestRecordNo = matchRow?.latest_record_no
-    ? Number(matchRow.latest_record_no)
+    playerRow?.skill_branch_type ?? latestMatchRow?.skill_branch_type ?? null;
+  const latestRecordNo = latestMatchRow?.record_no
+    ? Number(latestMatchRow.record_no)
     : 0;
 
-  const overallWins = playerRow
-    ? Number(playerRow.win_count)
-    : Number(matchRow.match_wins || 0);
-  const overallLosses = playerRow
-    ? Number(playerRow.lose_count)
-    : Number(matchRow.match_losses || 0);
+  const overallWins = playerRow ? Number(playerRow.win_count) : matchWins;
+  const overallLosses = playerRow ? Number(playerRow.lose_count) : matchLosses;
   const overallDraws = playerRow ? Number(playerRow.draw_count) : 0;
   const overallTotalGames = overallWins + overallLosses + overallDraws;
   const overallWinrate =
@@ -555,11 +578,7 @@ async function getOverlayData({ nick, region, token } = {}) {
   let sessionStats = null;
 
   if (sessionRow) {
-    const enrichedMatches = await getEnrichedMatchHistory(
-      targetRegion,
-      canonicalNick,
-      canonicalUserNo,
-    );
+    const enrichedMatches = enrichMatchRows(matchRows);
 
     const anchorRecordNo = Number(sessionRow.anchor_record_no);
     const sessionStartRecordNo = Number(sessionRow.session_start_record_no);
@@ -612,13 +631,13 @@ async function getOverlayData({ nick, region, token } = {}) {
   const latestMatch = hasMatches
     ? {
         record_no: latestRecordNo,
-        is_winner: Boolean(matchRow.latest_is_winner),
-        kills: Number(matchRow.latest_kills || 0),
-        deaths: Number(matchRow.latest_deaths || 0),
-        cc: Number(matchRow.latest_cc || 0),
-        damage_done: Number(matchRow.latest_damage_done || 0),
-        damage_taken: Number(matchRow.latest_damage_taken || 0),
-        recovery: Number(matchRow.latest_recovery || 0),
+        is_winner: Boolean(latestMatchRow.is_winner),
+        kills: Number(latestMatchRow.kill_count || 0),
+        deaths: Number(latestMatchRow.death_count || 0),
+        cc: Number(latestMatchRow.cc_applied_count || 0),
+        damage_done: Number(latestMatchRow.damage_done || 0),
+        damage_taken: Number(latestMatchRow.damage_taken || 0),
+        recovery: Number(latestMatchRow.recovery || 0),
       }
     : null;
 
@@ -641,12 +660,12 @@ async function getOverlayData({ nick, region, token } = {}) {
       winrate: overallWinrate,
     },
     averages: {
-      kills: Number(matchRow?.avg_kills || 0),
-      deaths: Number(matchRow?.avg_deaths || 0),
-      cc: Number(matchRow?.avg_cc || 0),
-      damage_done: Number(matchRow?.avg_damage_done || 0),
-      damage_taken: Number(matchRow?.avg_damage_taken || 0),
-      recovery: Number(matchRow?.avg_recovery || 0),
+      kills: hasMatches ? Number((sumKills / totalMatches).toFixed(1)) : 0,
+      deaths: hasMatches ? Number((sumDeaths / totalMatches).toFixed(1)) : 0,
+      cc: hasMatches ? Number((sumCc / totalMatches).toFixed(1)) : 0,
+      damage_done: hasMatches ? Math.round(sumDamageDone / totalMatches) : 0,
+      damage_taken: hasMatches ? Math.round(sumDamageTaken / totalMatches) : 0,
+      recovery: hasMatches ? Math.round(sumRecovery / totalMatches) : 0,
     },
     session: sessionStats,
   };

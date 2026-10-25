@@ -8,6 +8,12 @@ export default controller.handle({
       token: query.token,
     });
 
+    setHeader(
+      event,
+      "Cache-Control",
+      "public, max-age=0, s-maxage=10, stale-while-revalidate=10",
+    );
+
     return overlayData;
   },
 });
