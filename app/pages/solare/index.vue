@@ -243,7 +243,7 @@
                             ? `+${latestMatchDelta}`
                             : latestMatchDelta
                         }}
-                        PDL
+                        PTS
                       </span>
                       <span class="text-stone-500">
                         #{{ activeLatestMatch.record_no }}
@@ -429,16 +429,16 @@
                 >
                   Previous session detected: Your last session is at
                   <span class="font-mono font-bold text-white">
-                    {{ activePlayerData.rating }} PDL
+                    {{ activePlayerData.rating }} PTS
                   </span>
                   . Starting a new session will automatically continue from
                   <span class="font-mono font-bold text-[#dfcaa2]">
-                    {{ activePlayerData.rating }} PDL
+                    {{ activePlayerData.rating }} PTS
                   </span>
                   (or customize your baseline below).
                 </template>
                 <template v-else>
-                  Enter your current in-game Arena of Solare rating (PDL) below.
+                  Enter your current in-game Arena of Solare rating (PTS) below.
                   On future streams, your ending rating will be carried over
                   automatically!
                 </template>
@@ -450,7 +450,7 @@
               <label
                 class="text-[11px] font-semibold uppercase tracking-wider text-stone-400 block mb-1"
               >
-                Starting Rating (PDL)
+                Starting Rating (PTS)
               </label>
               <div class="relative">
                 <input
@@ -535,7 +535,7 @@
                         ? `+${activePlayerData.session?.net_pdl ?? 0}`
                         : (activePlayerData.session?.net_pdl ?? 0)
                     }}
-                    PDL
+                    PTS
                   </span>
                   <span>)</span>
                 </div>
@@ -944,17 +944,17 @@ import { ref, computed, watch, onMounted, onUnmounted } from "vue";
 import { getClassName, getSkillBranch } from "~/utils/solareTier.js";
 
 useSeoMeta({
-  title: "BDO Arena of Solare OBS Stream Overlay & PDL Tracker",
+  title: "BDO Arena of Solare OBS Stream Overlay & Rating Tracker",
   description:
-    "Free real-time Black Desert Online (BDO) Arena of Solare stream overlay for OBS Studio. Track your rank tier, live session PDL delta, win streak bonus, Win/Loss ratio, and combat averages across SA, NA, EU, KR, JP, RU, TR, and TW. Overlay de Arena de Solare para BDO.",
+    "Free real-time Black Desert Online (BDO) Arena of Solare stream overlay for OBS Studio. Track your rank tier, live session rating delta (PTS), win streak bonus, Win/Loss ratio, and combat averages across SA, NA, EU, KR, JP, RU, TR, and TW. Overlay de Arena de Solare para BDO.",
   keywords:
-    "BDO Solare Overlay, Arena of Solare OBS Overlay, Overlay de Solare BDO, BDO Stream Widget, BDO PDL Tracker, Arena de Solare Ranking BDO, Black Desert OBS Overlay",
+    "BDO Solare Overlay, Arena of Solare OBS Overlay, Overlay de Solare BDO, BDO Stream Widget, BDO Rating Tracker, BDO PDL Tracker, Arena de Solare Ranking BDO, Black Desert OBS Overlay",
   ogTitle: "BDO Arena of Solare OBS Stream Overlay — Down Attack",
   ogDescription:
-    "Real-time OBS browser widget for BDO Arena of Solare with live session PDL tracking, win streak bonuses, and combat averages across all regions.",
+    "Real-time OBS browser widget for BDO Arena of Solare with live session rating tracking, win streak bonuses, and combat averages across all regions.",
   twitterTitle: "BDO Arena of Solare OBS Stream Overlay — Down Attack",
   twitterDescription:
-    "Real-time OBS browser widget for BDO Arena of Solare with live session PDL tracking, win streak bonuses, and combat averages across all regions.",
+    "Real-time OBS browser widget for BDO Arena of Solare with live session rating tracking, win streak bonuses, and combat averages across all regions.",
 });
 
 definePageMeta({
@@ -1148,7 +1148,7 @@ const fullObsUrl = computed(() => {
   const origin =
     typeof window !== "undefined"
       ? window.location.origin
-      : "https://downattack.com";
+      : "https://down-attack.com";
   if (sessionToken.value) {
     return `${origin}/solare/overlay?token=${encodeURIComponent(sessionToken.value)}&layout=${selectedLayout.value}`;
   }
@@ -1172,7 +1172,7 @@ const displayedObsUrl = computed(() => {
   const origin =
     typeof window !== "undefined"
       ? window.location.origin
-      : "https://downattack.com";
+      : "https://down-attack.com";
   const rawToken = sessionToken.value;
   const masked =
     rawToken.length > 12
@@ -1352,7 +1352,7 @@ async function handleStartOrResetSession() {
 
     sessionButtonLabel.value = `SESSION LIVE (${body.anchor_rating} BASELINE)`;
     sessionFeedbackIsError.value = false;
-    sessionFeedbackMessage.value = `Session baseline set to ${body.anchor_rating} PDL. OBS overlay will update within 20s!`;
+    sessionFeedbackMessage.value = `Session baseline set to ${body.anchor_rating} PTS. OBS overlay will update within 20s!`;
 
     setTimeout(() => {
       sessionButtonLabel.value = "START / RESET TODAY'S SESSION";

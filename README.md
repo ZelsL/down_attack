@@ -18,7 +18,7 @@
 
 - **Live OBS Browser Widget:** Real-time stream overlay supporting **Vertical (`340×520 px`)** and **Horizontal (`790×200 px`)** layouts with transparent background support.
 - **Multi-Region Support:** Search and track players across **SA, NA, EU, KR, JP, RU, TR, and TW**.
-- **Session & Win Streak PDL Tracking:** Tracks live session Win/Loss record, net PDL gain/loss, recent match deltas, combat averages (Avg Damage, Damage Taken, CC, Recovery, K/D), and official consecutive win-streak bonus points (`+2`, `+5`, `+8` PDL).
+- **Session & Win Streak Rating Tracking:** Tracks live session Win/Loss record, net rating gain/loss (`PTS`), recent match deltas, combat averages (Avg Damage, Damage Taken, CC, Recovery, K/D), and official consecutive win-streak bonus points (`+2`, `+5`, `+8` PTS).
 
 ---
 

@@ -369,7 +369,7 @@
               />
               <span>
                 PvP damage calculations, effective HP formulas, class modifiers,
-                and Solare PDL tracking are provided
+                and Solare rating tracking are provided
                 <strong class="text-[#ffedd4]">"AS IS"</strong> for estimation
                 and community theorycrafting purposes only.
               </span>
