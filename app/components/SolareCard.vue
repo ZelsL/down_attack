@@ -9,28 +9,54 @@
     <header
       class="bg-[#826744] px-3 py-1.5 flex items-center justify-between text-neutral-100 font-bold border-b border-[#5e492d]"
     >
-      <div class="flex items-center gap-2 tracking-wide">
+      <div class="flex items-center gap-2 tracking-wide min-w-0">
         <img
           src="/images/solare/solare-icon-game@4x.png"
           alt="Arena of Solare"
-          class="h-6 w-auto object-contain"
+          class="h-6 w-auto object-contain shrink-0"
         />
-        <h1 class="text-sm font-black tracking-normal uppercase">
+        <h1 class="text-sm font-black tracking-normal uppercase truncate">
           Arena of Solare
         </h1>
       </div>
-      <div class="flex items-center gap-2.5 text-xs font-black tracking-wider">
+      <div
+        class="flex items-center gap-2 text-xs font-black tracking-wider shrink-0"
+      >
         <span
           class="bg-[#654e30] px-2 py-0.5 rounded text-xs font-black uppercase text-amber-200"
         >
           {{ regionLabel }}
         </span>
-        <span
+        <div
           aria-label="Help"
-          class="hover:text-yellow-200 transition-colors cursor-default leading-none text-sm font-bold"
+          class="help-pill inline-flex items-center overflow-hidden rounded transition-all duration-500 ease-out cursor-default leading-none"
+          :class="
+            activeView === 1
+              ? 'bg-[#2a2420]/75 border border-[#dfcaa2]/40 px-1.5 py-0.5 shadow-inner'
+              : 'border border-transparent px-0.5 py-0.5'
+          "
         >
-          ?
-        </span>
+          <span
+            class="transition-colors duration-300 text-sm font-bold leading-none shrink-0"
+            :class="
+              activeView === 1
+                ? 'text-amber-200'
+                : 'text-neutral-100 hover:text-yellow-200'
+            "
+          >
+            ?
+          </span>
+          <span
+            class="help-pill-text overflow-hidden whitespace-nowrap font-mono text-[10px] font-black tracking-normal text-[#f1e5d3]"
+            :class="
+              activeView === 1
+                ? 'max-w-[120px] opacity-100 ml-1'
+                : 'max-w-0 opacity-0 ml-0'
+            "
+          >
+            {{ siteDomainLabel }}
+          </span>
+        </div>
         <span
           aria-label="Close"
           class="hover:text-yellow-200 transition-colors cursor-default leading-none text-sm font-bold"
@@ -311,7 +337,7 @@
                   "
                 >
                   {{ formattedNetPdl }}
-                  <span class="text-xs font-extrabold text-[#cfbe9e]">PDL</span>
+                  <span class="text-xs font-extrabold text-[#cfbe9e]">PTS</span>
                 </div>
               </div>
             </div>
@@ -399,18 +425,39 @@
       </div>
 
       <div
-        class="flex items-center gap-3.5 text-[14px] font-black text-[#fbf6ec]"
+        class="flex items-center gap-3 text-[14px] font-black text-[#fbf6ec]"
       >
         <span
           class="tracking-wider bg-[#2a2420]/50 border border-[#dfcaa2]/30 px-2 py-0.5 rounded text-[13px]"
         >
           {{ regionLabel }}
         </span>
-        <span
-          class="cursor-default opacity-90 hover:opacity-100 text-[15px] font-bold"
+        <div
+          aria-label="Help"
+          class="help-pill inline-flex items-center overflow-hidden rounded transition-all duration-500 ease-out cursor-default leading-none"
+          :class="
+            activeView === 1
+              ? 'bg-[#2a2420]/75 border border-[#dfcaa2]/40 px-2 py-0.5 shadow-inner'
+              : 'border border-transparent px-0.5 py-0.5 opacity-90 hover:opacity-100'
+          "
         >
-          ?
-        </span>
+          <span
+            class="transition-colors duration-300 text-[15px] font-bold leading-none shrink-0"
+            :class="activeView === 1 ? 'text-[#dfcaa2]' : 'text-[#fbf6ec]'"
+          >
+            ?
+          </span>
+          <span
+            class="help-pill-text overflow-hidden whitespace-nowrap font-mono text-[12px] font-black tracking-normal text-[#fbf6ec]"
+            :class="
+              activeView === 1
+                ? 'max-w-[150px] opacity-100 ml-1.5'
+                : 'max-w-0 opacity-0 ml-0'
+            "
+          >
+            {{ siteDomainLabel }}
+          </span>
+        </div>
         <span
           class="cursor-default opacity-90 hover:opacity-100 text-[16px] font-bold leading-none"
         >
@@ -717,7 +764,7 @@
                 <span
                   class="text-[12px] font-extrabold text-[#dfcaa2] tracking-wider"
                 >
-                  PDL
+                  PTS
                 </span>
               </div>
             </div>
@@ -816,6 +863,20 @@ watch(
 const regionLabel = computed(() =>
   String(props.data?.region || "SA").toUpperCase(),
 );
+
+const siteDomainLabel = computed(() => {
+  if (typeof window !== "undefined" && window.location?.host) {
+    const host = window.location.host.replace(/^www\./i, "");
+    if (
+      !host.startsWith("localhost") &&
+      !host.startsWith("127.0.0.1") &&
+      !host.endsWith(".vercel.app")
+    ) {
+      return host;
+    }
+  }
+  return "down-attack.com";
+});
 
 const nickname = computed(
   () => props.data?.user_nickname || props.data?.nickname || "Unknown",
@@ -1037,5 +1098,12 @@ onUnmounted(() => {
 
 .live-dot-pulse {
   animation: live-pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}
+
+.help-pill-text {
+  transition:
+    max-width 0.45s cubic-bezier(0.22, 1, 0.36, 1),
+    opacity 0.35s ease,
+    margin-left 0.45s cubic-bezier(0.22, 1, 0.36, 1);
 }
 </style>

@@ -193,7 +193,7 @@
               </div>
               <p class="text-xs sm:text-sm text-[#848895] leading-relaxed">
                 Public in-game match records, Family Name, region, and session
-                baseline rating (PDL) queried specifically to generate your
+                baseline rating (PTS) queried specifically to generate your
                 real-time OBS Browser Source overlay.
               </p>
             </div>

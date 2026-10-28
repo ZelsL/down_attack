@@ -75,16 +75,16 @@ npm run user:admin <your_username_or_discord_id>
 
 ## ⚔️ Simulating Arena of Solare Matches Locally
 
-To test the **Arena of Solare Overlay (`/solare`)** and live OBS widget (`20s` auto-refresh, win-streak bonus calculation, and session PDL deltas) in development:
+To test the **Arena of Solare Overlay (`/solare`)** and live OBS widget (`20s` auto-refresh, win-streak bonus calculation, and session rating deltas) in development:
 
 ```bash
 # 1. Seed initial demo player 'Okazaki' (SA) with 4 base matches (#930001-#930004)
 npm run solare:seed
 
-# 2. Simulate a new VICTORY (+26 base PDL + win streak bonus) for 'Okazaki'
+# 2. Simulate a new VICTORY (+26 base PTS + win streak bonus) for 'Okazaki'
 npm run solare:win
 
-# 3. Simulate a new DEFEAT (-21 PDL and streak reset) for 'Okazaki'
+# 3. Simulate a new DEFEAT (-21 PTS and streak reset) for 'Okazaki'
 npm run solare:loss
 ```
 

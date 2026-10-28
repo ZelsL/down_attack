@@ -335,7 +335,8 @@
               <p class="text-xs sm:text-sm text-[#848895] leading-relaxed mt-2">
                 Real-time OBS Studio browser widget for ranked Solare across all
                 regions (SA, NA, EU, KR, JP, RU, TR, TW). Tracks your tier
-                crest, PDL rating, win streak bonuses, and live session stats.
+                crest, Solare rating (PTS), win streak bonuses, and live session
+                stats.
               </p>
             </div>
 
@@ -354,7 +355,7 @@
               <span
                 class="px-2 py-1 rounded bg-[#201d1a] border border-[#2e2a26] text-[11px] font-mono text-[#cfd2dc]"
               >
-                Win Streak &amp; PDL Delta
+                Win Streak &amp; Rating Delta
               </span>
             </div>
 
@@ -422,11 +423,11 @@ useSeoMeta({
   ogTitle:
     "Down Attack — BDO PvP Damage Calculator & Arena of Solare Stream Overlay",
   ogDescription:
-    "Compare BDO PvP skill combos side-by-side, inspect DR & Evasion Effective HP curves, and track live Arena of Solare PDL in OBS Studio.",
+    "Compare BDO PvP skill combos side-by-side, inspect DR & Evasion Effective HP curves, and track live Arena of Solare rating in OBS Studio.",
   twitterTitle:
     "Down Attack — BDO PvP Damage Calculator & Arena of Solare Stream Overlay",
   twitterDescription:
-    "Compare BDO PvP skill combos side-by-side, inspect DR & Evasion Effective HP curves, and track live Arena of Solare PDL in OBS Studio.",
+    "Compare BDO PvP skill combos side-by-side, inspect DR & Evasion Effective HP curves, and track live Arena of Solare rating in OBS Studio.",
 });
 
 useHead({
